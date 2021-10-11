@@ -132,7 +132,7 @@ class PackageTable {
     for(const contentView of rawViews){
       viewsObject[contentView.id] = {
         'type': contentView.type,
-        'name': (contentView.type === '3D' ? contentView.view.viewName : contentView.view.sheetName)
+        'name': (contentView.type === 'FILE_MODEL' ? contentView.view.viewName : contentView.view.sheetName)
       }
     }
     return viewsObject;
