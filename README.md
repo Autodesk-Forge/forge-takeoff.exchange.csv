@@ -13,7 +13,7 @@
 
 ## Description
 
-This sample demonstrates how a way to retrieve, classificate and export data of inventories from ACC Takeoff. It includes 3 main tasks:
+This sample demonstrates how to retrieve, classify and export data of inventories from ACC Takeoff. It includes 2 main tasks:
 
 1. Display ACC Takeoff Inventory either in **Raw data** and **Human readable form**.
 2. Export ACC Takeoff Inventory from **current** or **all** packages available either in **Raw data** and **Human readable form** to a CSV file.
@@ -26,11 +26,11 @@ This sample is implemented based on Node.js version of [Learn Forge Tutorial](ht
 
 ## Demonstration
 
-<!-- [![https://youtu.be/X6mFX_yqhTI](http://img.youtube.com/vi/X6mFX_yqhTI/0.jpg)](https://youtu.be/X6mFX_yqhTI "Display and exchange BIM 360 cost information with CSV file") -->
+
 
 ## Live Demo
 
-<!-- [https://bim360cost-exchange.herokuapp.com/](https://bim360cost-exchange.herokuapp.com/) -->
+
 
 # Web App Setup
 
@@ -50,7 +50,7 @@ Install [NodeJS](https://nodejs.org), version 14 or newer.
 
 Clone this project or download it (this `nodejs` branch only). It's recommended to install [GitHub desktop](https://desktop.github.com/). To clone it via command line, use the following (**Terminal** on MacOSX/Linux, **Git Shell** on Windows):
 
-    git clone https://github.com/Autodesk-Forge/forge-bim360.costmanagement.exchange.csv
+    git clone https://github.com/Autodesk-Forge/forge-acc.takeoff.exchange.csv
 
 Install the required packages using `npm install`.
 
@@ -88,7 +88,7 @@ Open the browser: [http://localhost:3000](http://localhost:3000).
 
 - **Operate with App after setup**
 
-1. Once you select a project, the sample will load the packages available. With project and package selected, you need to click on loar/refresh button in order to retrieve the results to the table.
+1. Once you select a project, the sample will load the packages available. **With project and package selected, you need to click on load/refresh button in order to retrieve the results to the table.**
 2. By simply selecting the radio options you can adjust your data to show human/raw form of the available classifications
 3. The first Table shows the data classified according to the chosen options and the second shows each individual takeoff item.
 
@@ -98,15 +98,13 @@ To deploy this application to Heroku, the **Callback URL** for Forge must use yo
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Autodesk-Forge/forge-bim360.costmanagement.exchange.csv)
 
-## Limitation
-
-- BIM 360 Cost Management module needs to be activated to use this App, due to the current limitation of BIM 360 API, user needs to activate & setup cost project manually. Please check [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html) for details.
-
 ## Known issues
 
 1. For the extraction as CSV, the fileds containing commas are replaced by blank spaces, so they're not mistaken as another column.
 
 ## Tips & Tricks
+
+1. **You'll need to click on load/refresh button after selecting your project and package in order to generate the proper table with the desired takeoff items.** 
 
 ## Troubleshooting
 
@@ -119,16 +117,13 @@ To deploy this application to Heroku, the **Callback URL** for Forge must use yo
 - This sample is based on [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please check details there about the basic framework if you are not familar.
 - [Data Management API](https://developer.autodesk.com/en/docs/data/v2/overview/)
 - [ACC API](https://developer.autodesk.com/en/docs/bim360/v1/overview/) and [App Provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps)
-- [ACC Takeoff API](https://forge.autodesk.com/en/docs/bim360/v1/overview/field-guide/cost-management/)
+- [ACC Takeoff API](https://forge.autodesk.com/en/docs/acc/v1/tutorials/takeoff/)
 - [Create ACC project, activate and configure Takeoff module](https://knowledge.autodesk.com/support/takeoff/learn-explore/caas/CloudHelp/cloudhelp/ENU/Takeoff-GS/files/Getting-Started-Takeoff-html.html)
-
-**Tutorials**:
-
-- [View BIM 360/ACC Models](http://learnforge.autodesk.io/#/tutorials/viewhubmodels)
+- [View BIM 360/ACC Models Tutorial](http://learnforge.autodesk.io/#/tutorials/viewhubmodels)
 
 **Blogs**:
 
-- [Forge Blog](https://forge.autodesk.com/categories/bim-360-api)
+- [Forge Blog](https://forge.autodesk.com/blog/autodesk-takeoff-api)
 - [Field of View](https://fieldofviewblog.wordpress.com/), a BIM focused blog
 
 ## License
@@ -137,4 +132,4 @@ This sample is licensed under the terms of the [MIT License](http://opensource.o
 
 ## Written by
 
-João Martins [@JooPaulodeOrne2](http://twitter.com/JooPaulodeOrne2), [Forge Partner Development](http://forge.autodesk.com)
+João Martins [@JooPaulodeOrne2](http://twitter.com/JooPaulodeOrne2), [Developer Advocate and Support](http://forge.autodesk.com)
