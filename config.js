@@ -20,9 +20,9 @@
 module.exports = {
     // Set environment variables or hard-code here
     credentials: {
-        client_id: "",
-        client_secret: "",
-        callback_url: "http://localhost:3000/api/forge/callback/oauth"
+        client_id: process.env.FORGE_CLIENT_ID,
+        client_secret: process.env.FORGE_CLIENT_SECRET,
+        callback_url: process.env.FORGE_CALLBACK_URL
     },
     scopes: {
         // Required scopes for the server-side application
@@ -44,19 +44,12 @@ module.exports = {
     takeoff:{
         URL:{
             PACKAGES_URL:        "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/packages",
-
-            ITEMS_URL:      "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/packages/{1}/takeoff-items",
-
-            TAKEOFF_TYPES: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/packages/{1}/takeoff-types",
-
-            TAKEOFF_TYPE: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/packages/{1}/takeoff-types/{2}",
-
-            CONTENT_VIEW: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/content-views",
-
+            ITEMS_URL:           "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/packages/{1}/takeoff-items",
+            TAKEOFF_TYPES:       "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/packages/{1}/takeoff-types",
+            TAKEOFF_TYPE:        "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/packages/{1}/takeoff-types/{2}",
+            CONTENT_VIEW:        "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/content-views",
             CLASSIFICATION_SYSTEMS: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems",
-
-            ALL_CLASSIFICATIONS: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems/{1}/classifications"
-            
+            ALL_CLASSIFICATIONS: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems/{1}/classifications"            
         }
     },
     
