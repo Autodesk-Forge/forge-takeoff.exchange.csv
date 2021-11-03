@@ -26,7 +26,7 @@ This sample is implemented based on Node.js version of [Learn Forge Tutorial](ht
 
 ## Demonstration
 
-
+https://www.youtube.com/watch?v=_SJVh2si40Y
 
 ## Live Demo
 
@@ -80,7 +80,7 @@ Windows (use **Node.js command line** from Start menu)
 
 Open the browser: [http://localhost:3000](http://localhost:3000).
 
-**Please watch the [Video](https://youtu.be/X6mFX_yqhTI) for the detail setup and usage, or follow the steps:**
+**Please watch the [Video](https://www.youtube.com/watch?v=_SJVh2si40Y) for the detail setup and usage, or follow the steps:**
 
 - **Setup the app before using the App**
 
