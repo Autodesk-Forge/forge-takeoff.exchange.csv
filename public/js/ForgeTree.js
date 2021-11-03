@@ -135,6 +135,10 @@ function prepareUserHubsTree() {
       $('#packages').empty();
       $('#btnRefresh').click();
     }
+    if (data != null && data.node != null && (data.node.type == 'bim360projects' )) {
+      alert("Only ACC project is supported, please select ACC project!")
+    }
+
   }); 
 }
 
