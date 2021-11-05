@@ -1,4 +1,4 @@
-# forge-acc.takeoff.exchange.csv
+# forge-takeoff.exchange.csv
 
 [![Node.js](https://img.shields.io/badge/Node.js-14.16-blue.svg)](https://nodejs.org/)
 [![npm](https://img.shields.io/badge/npm-6.14-blue.svg)](https://www.npmjs.com/)
@@ -13,10 +13,10 @@
 
 ## Description
 
-This sample demonstrates how to retrieve, classify and export data of inventories from ACC Takeoff. It includes 2 main tasks:
+This sample demonstrates how to retrieve, classify and export data of inventories from Autodesk Takeoff. It includes 2 main tasks:
 
-1. Display ACC Takeoff Inventory either in **Raw data** and **Human readable form**.
-2. Export ACC Takeoff Inventory from **current** or **all** packages available either in **Raw data** and **Human readable form** to a CSV file.
+1. Display Autodesk Takeoff Inventory either in **Raw data** and **Human readable form**.
+2. Export Autodesk Takeoff Inventory from **current** or **all** packages available either in **Raw data** and **Human readable form** to a CSV file.
 
 This sample is implemented based on Node.js version of [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please refer to https://learnforge.autodesk.io/ for the details about the framework.
 
@@ -38,7 +38,7 @@ https://autodesk-takeoff-exchange.herokuapp.com
 
 1. **Forge Account**: Learn how to create a Forge Account, activate subscription and create an app at [this tutorial](http://learnforge.autodesk.io/#/account/).
 2. **ACC Account**: must be Account Admin to add the app integration. [Learn about provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps).
-3. **ACC Takeoff**: Create ACC project, activate Takeoff module, according to [the guide](https://knowledge.autodesk.com/support/takeoff/learn-explore/caas/CloudHelp/cloudhelp/ENU/Takeoff-GS/files/Getting-Started-Takeoff-html.html)
+3. **Autodesk Takeoff**: Create ACC project, activate Takeoff module, according to [the guide](https://knowledge.autodesk.com/support/takeoff/learn-explore/caas/CloudHelp/cloudhelp/ENU/Takeoff-GS/files/Getting-Started-Takeoff-html.html)
 4. **Node.js**: basic knowledge with [**Node.js**](https://nodejs.org/en/).
 5. **JavaScript** basic knowledge with **jQuery**
 
@@ -50,7 +50,7 @@ Install [NodeJS](https://nodejs.org), version 14 or newer.
 
 Clone this project or download it (this `nodejs` branch only). It's recommended to install [GitHub desktop](https://desktop.github.com/). To clone it via command line, use the following (**Terminal** on MacOSX/Linux, **Git Shell** on Windows):
 
-    git clone https://github.com/Autodesk-Forge/forge-acc.takeoff.exchange.csv
+    git clone https://github.com/Autodesk-Forge/forge-takeoff.exchange.csv
 
 Install the required packages using `npm install`.
 
@@ -96,7 +96,7 @@ Open the browser: [http://localhost:3000](http://localhost:3000).
 
 To deploy this application to Heroku, the **Callback URL** for Forge must use your `.herokuapp.com` address. After clicking on the button below, at the Heroku Create New App page, set your Client ID, Secret and Callback URL for Forge.
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Autodesk-Forge/forge-acc.takeoff.exchange.csv)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Autodesk-Forge/forge-takeoff.exchange.csv)
 
 ## Known issues
 
@@ -117,7 +117,7 @@ To deploy this application to Heroku, the **Callback URL** for Forge must use yo
 - This sample is based on [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please check details there about the basic framework if you are not familar.
 - [Data Management API](https://developer.autodesk.com/en/docs/data/v2/overview/)
 - [ACC API](https://developer.autodesk.com/en/docs/bim360/v1/overview/) and [App Provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps)
-- [ACC Takeoff API](https://forge.autodesk.com/en/docs/acc/v1/tutorials/takeoff/)
+- [Autodesk Takeoff API](https://forge.autodesk.com/en/docs/acc/v1/tutorials/takeoff/)
 - [Create ACC project, activate and configure Takeoff module](https://knowledge.autodesk.com/support/takeoff/learn-explore/caas/CloudHelp/cloudhelp/ENU/Takeoff-GS/files/Getting-Started-Takeoff-html.html)
 - [View BIM 360/ACC Models Tutorial](http://learnforge.autodesk.io/#/tutorials/viewhubmodels)
 
