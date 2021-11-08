@@ -71,28 +71,21 @@ async function getHubs(oauthClient, credentials, res) {
 async function getProjects(hubId, oauthClient, credentials, res) {
     const projects = new ProjectsApi();
     const data = await projects.getHubProjects(hubId, {}, oauthClient, credentials);
-    res.json(data.body.data.map((project) => {
-        let projectType = 'projects';
-        switch (project.attributes.extension.type) {
-            case 'projects:autodesk.core:Project':
-                projectType = 'a360projects';
-                break;
-            case 'projects:autodesk.bim360:Project':
-                if(project.attributes.extension.data.projectType == 'ACC'){
-                    projectType = 'accprojects';  
-                }else{
-                    projectType = 'bim360projects'; 
-                }
-                break;
+    const treeNodes = data.body.data.map((project) => {
+        if (project.attributes.extension.type == "projects:autodesk.bim360:Project"
+            && project.attributes.extension.data.projectType == 'ACC') {
+            return createTreeNode(
+                project.links.self.href,
+                project.attributes.name,
+                'accprojects',
+                project.id,
+                false
+            );
+        } else {
+            return null;
         }
-        return createTreeNode(
-            project.links.self.href,
-            project.attributes.name,
-            projectType,
-            project.id,
-            false
-        );
-    }));
+    })
+    res.json(treeNodes.filter(node => node !== null));
 }
 
 // Format data for tree
