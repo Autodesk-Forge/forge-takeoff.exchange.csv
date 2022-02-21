@@ -41,7 +41,9 @@ var exportOption;
 // Data type
 const TakeoffDataType = {
   PACKAGES   : 'packages',
-  ITEMS : 'items'
+  ITEMS : 'items',
+  SYSTEMS: 'systems',
+  CLASSIFICATIONS: 'classifications'
 }
 
 const Systems = {
@@ -324,7 +326,7 @@ class PackageTable {
   async polishDataOfCurrentDataTypeAsync() {
     if(this.CurrentDataType == TakeoffDataType.ITEMS){
       try{
-        let orderBy = $('input[name="group_by"]:checked').val();
+        let orderBy = $('#group_by').find(":selected").val();
         switch( orderBy ){
           case 'primaryclassification':{
             await this.adjustClassificationSystem1Data();
@@ -352,7 +354,10 @@ class PackageTable {
       catch(err){
         console.log(err);
       }
-      
+    }
+
+    if(this.CurrentDataType == TakeoffDataType.CLASSIFICATIONS){
+      this.csvData = this.prepareCSVData();
     }
   };
 
@@ -604,11 +609,16 @@ class PackageTable {
     this.currentDataType = dataType;
     switch (this.currentDataType) {
       case TakeoffDataType.PACKAGES: {
-        this.tableId = '#packageTable';
+        this.tableId = '#mainTable';
         break;
       }
       case TakeoffDataType.ITEMS: {
-        this.tableId = '#itemsTable';
+        this.tableId = '#mainTable';
+        this.rawTableId = '#secondaryTable';
+        break;
+      }
+      case TakeoffDataType.SYSTEMS: {
+        this.tableId = '#mainTable';
         break;
       }
     }
@@ -620,10 +630,19 @@ class PackageTable {
   };
 
   addPackagesToPage(){
-    $('#packages').empty();
+    // $('#list').empty();
     for(const newPackage of this.packages.sort((a,b) => (a.name > b.name ? 1 : -1))){
-      $('#packages').append(
-        `<div class="input-group" ><input type='radio'  name='packagesRadio' value='${newPackage.name}' checked><label style='' white-space: nowrap;'>&#160;${newPackage.name}</label></div><br>`
+      $('#list').append(
+        `<div class="input-group" ><input type='radio'  name='listRadio' value='${newPackage.name}' checked><label style='' white-space: nowrap;'>&#160;${newPackage.name}</label></div><br>`
+      );
+    }
+  }
+
+  addSystemsToPage(){
+    // $('#list').empty();
+    for(const newPackage of Object.values(this.systems).sort((a,b) => (a.name > b.name ? 1 : -1))){
+      $('#list').append(
+        `<div class="input-group systems_div"><input type='radio' name='listRadio' value='${newPackage.name}' checked><label style='' white-space: nowrap;'>&#160;${newPackage.name}</label><span class='classification_system'>${Object.keys(this.systems).find(key => this.systems[key]==newPackage)}</span></div><br>`
       );
     }
   }
@@ -636,12 +655,21 @@ class PackageTable {
 
     switch(this.currentDataType){
       case TakeoffDataType.PACKAGES: {
-        this.addPackagesToPage()
+        this.addPackagesToPage();
+        break;
+      }
+      case TakeoffDataType.SYSTEMS: {
+        this.addSystemsToPage();
         break;
       }
       case TakeoffDataType.ITEMS: {
         dataset = this.dataSet;
         rawItemsDataset = this.rawItemsDataset;
+        break;
+      }
+      case TakeoffDataType.CLASSIFICATIONS: {
+        let classificationName = $('input[name="listRadio"]:checked').val();
+        dataset = Object.values(this.systems).find( o => o.name === classificationName).codes;
         break;
       }
     }
@@ -770,8 +798,8 @@ class PackageTable {
 
     this.IsHumanReadable = isHumanReadable();
 
-    let groupBy = $('input[name="group_by"]:checked').val();
-    switch (groupBy) {
+    let orderBy = $('#group_by').find(":selected").val();
+    switch (orderBy) {
       case 'primaryclassification':
         await this.adjustClassificationSystem1Data();
         break;
@@ -883,32 +911,74 @@ $(document).ready(function () {
       return;
     }
 
+    let dataFetchs;
+    packageTable.IsHumanReadable = isHumanReadable();
+    packageTable.packageName = $('input[name="listRadio"]:checked').val();
+
+    // get the active tab
+    const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
+    switch( activeTab ){
+      case '#items':{
+        $('#group_by').show();
+        if(!packageTable.packageName || $('#listTitle').html() == 'CLASSIFICATION SYSTEMS'){
+          $('#list').empty();
+          packageTable.CurrentDataType = TakeoffDataType.PACKAGES;
+          dataFetchs = ['packages','systems', 'views'];
+        }
+        else{
+          packageTable.updatePackageId();
+          packageTable.CurrentDataType = TakeoffDataType.ITEMS;
+          dataFetchs = ['items','types'];
+        }
+        $('#listTitle').html('PACKAGES');
+        $('#tablesTitle').html('INVENTORY');
+        break;
+      }
+      case '#classificationsystems':{
+        $('#group_by').hide();
+        if(!packageTable.packageName || $('#listTitle').html() == 'PACKAGES'){
+          $('#list').empty();
+          packageTable.CurrentDataType = TakeoffDataType.SYSTEMS;
+          dataFetchs = ['systems', 'views'];
+        }
+        else{
+          packageTable.CurrentDataType = TakeoffDataType.CLASSIFICATIONS;
+        }
+        $('#listTitle').html('CLASSIFICATION SYSTEMS');
+        $('#tablesTitle').html('CLASSIFICATIONS');
+        break;
+      }
+    }
+
     $('.clsInProgress').show();
     $('.clsResult').hide();
 
-    packageTable.IsHumanReadable = isHumanReadable();
-    packageTable.packageName = $('input[name="packagesRadio"]:checked').val();
+    // packageTable.IsHumanReadable = isHumanReadable();
+    // packageTable.packageName = $('input[name="packagesRadio"]:checked').val();
 
-    let dataFetchs;
-    if(!packageTable.packageName){
-      packageTable.CurrentDataType = TakeoffDataType.PACKAGES;
-      dataFetchs = ['packages','systems', 'views'];
-    }
-    else{
-      packageTable.updatePackageId();
-      packageTable.CurrentDataType = TakeoffDataType.ITEMS;
-      dataFetchs = ['items','types'];
-    }
+    // let dataFetchs;
+    // if(!packageTable.packageName){
+    //   packageTable.CurrentDataType = TakeoffDataType.PACKAGES;
+    //   dataFetchs = ['packages','systems', 'views'];
+    // }
+    // else{
+    //   packageTable.updatePackageId();
+    //   packageTable.CurrentDataType = TakeoffDataType.ITEMS;
+    //   dataFetchs = ['items','types'];
+    // }
 
     try{
       for(const data of dataFetchs){
         await packageTable.fetchDataAsync(data);
       }
-      await packageTable.polishDataOfCurrentDataTypeAsync();
-      packageTable.drawTakeoffTable();  
+      // await packageTable.polishDataOfCurrentDataTypeAsync();
+      // packageTable.drawTakeoffTable();  
     }catch(err){
       console.log(err);
     }
+
+    await packageTable.polishDataOfCurrentDataTypeAsync();
+    packageTable.drawTakeoffTable();
 
     $('.clsInProgress').hide();
     $('.clsResult').show();

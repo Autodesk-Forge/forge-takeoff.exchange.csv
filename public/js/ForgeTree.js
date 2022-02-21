@@ -60,7 +60,7 @@ $(document).ready(function () {
     });
   });
 
-  $('input[type=radio][name=group_by]').change(function() {
+  $('#group_by').change(function() {
     if(!!packageTable){
       packageTable.refreshTable();
     }
@@ -72,6 +72,10 @@ $(document).ready(function () {
     }
   });
 
+  $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    $('#btnRefresh').click();
+  });
+
   $.getJSON("/api/forge/oauth/clientid", function (res) {
     $("#ClientID").val(res.id);
     $("#provisionAccountSave").click(function () {
@@ -81,8 +85,6 @@ $(document).ready(function () {
   });  
 
 });
-
-
 
 function prepareUserHubsTree() {
   $('#sourceHubs').jstree({
@@ -131,7 +133,7 @@ function prepareUserHubsTree() {
         packageTable = null;
       }
 
-      packageTable = new PackageTable('#itemsTable', '#rawItemsTable', data.node.original.project_id, data.node.id, TakeoffDataType.PACKAGES);
+      packageTable = new PackageTable('#mainTable', '#secondaryTable', data.node.original.project_id, data.node.id, TakeoffDataType.PACKAGES);
       $('#packages').empty();
       $('#btnRefresh').click();
     }

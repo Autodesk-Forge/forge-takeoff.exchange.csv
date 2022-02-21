@@ -27,3 +27,16 @@ body {
 .highlight tr {
   background: #ddd;
 }
+
+.systems_div > .classification_system {
+  display: none;
+}
+
+.systems_div:hover > .classification_system {
+  display: inline;
+  position: absolute;
+  top: 1.5em;
+  left: 1.5em;
+  background: rgb(218, 214, 214);
+  border: 1px solid black;
+}
