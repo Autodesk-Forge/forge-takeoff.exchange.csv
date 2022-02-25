@@ -16,7 +16,6 @@
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
 
-
 // Define method String.replaceAll 
 if (!String.prototype.replaceAll) {
   String.prototype.replaceAll = function (search, replacement) {
@@ -65,6 +64,8 @@ class PackageTable {
     this.items = {};
     this.types = {};
     this.views = {};
+    this.rawLocations = [];
+    this.locationsMap = {};
     this.packages = [];
     this.currentDataType = currentDataType;
     this.currentDataStyle = null;
@@ -122,12 +123,37 @@ class PackageTable {
           this.views = await this.prepareViewsData(rawViews);
           break;
         };
+        case 'locations':{
+          ////Through this call we're retrieving the available locations for a specific project
+          this.rawLocations = await apiClientAsync(requestUrl, requestData);
+          this.locationsMap = await this.prepareLocationsData(this.rawLocations);
+          break;
+        }
       };
       
     } catch (err) {
       console.log(err);
     }
   };
+
+  async prepareLocationsData(rawLocations){
+    let locationsMap = {};
+    rawLocations.forEach(rawLocation => {
+      locationsMap[rawLocation.id] = this.getFullLocationMap(rawLocation);
+    });
+    return locationsMap;
+  }
+
+  getFullLocationMap(rawLocation){
+    let fullLocation = [rawLocation.id];
+    let currentParentId = rawLocation.parentId;
+    while(!!currentParentId){
+      fullLocation.push(currentParentId);
+      let newParent = this.rawLocations.find(l => l.id === currentParentId);
+      currentParentId = newParent.parentId;
+    }
+    return fullLocation.reverse();
+  }
 
   async prepareViewsData(rawViews){
     let viewsObject = {};
@@ -202,16 +228,59 @@ class PackageTable {
       'byClassificationSystem2': {},
       'byContentView': {},
       'byTakeoffTypeId': {},
-      'rawItems': {}
+      'byLocationId': {},
+      'rawItemsPrimaryQ': {},
+      'rawItemsSecondaryQ': {}
     };
     for(const item of rawItems){
       //adjust raw items
-      itemsObject.rawItems[item.id] = {
+      itemsObject.rawItemsPrimaryQ[item.id] = {
         'Takeoff Name': item.type + ' TYPE',
-        'Primary Quantity': item.primaryQuantity.quantity,
-        'Primary Unit': item.primaryQuantity.unitOfMeasure,
-        'Document': item.contentView.id
+        'Classification 1': item.primaryQuantity.classificationCodeOne,
+        'Classification 2': item.primaryQuantity.classificationCodeTwo,
+        'Document': item.contentView.id,
+        'Location': item.locationId,
+        'ID': item.id,
+        'Type': item.type,
+        'Output Name': item.primaryQuantity.outputName,
+        'Quantity': item.primaryQuantity.quantity,
+        'Unit of Measure': item.primaryQuantity.unitOfMeasure,
       };
+      itemsObject.rawItemsSecondaryQ[item.id] = {
+        'Takeoff Name': item.type + ' TYPE',
+        'Classification 1': item.secondaryQuantities[0].classificationCodeOne,
+        'Classification 2': item.secondaryQuantities[0].classificationCodeTwo,
+        'Document': item.contentView.id,
+        'Location': item.locationId,
+        'ID': item.id,
+        'Type': item.type,
+        'Output Name': item.secondaryQuantities[0].outputName,
+        'Quantity': item.secondaryQuantities[0].quantity,
+        'Unit of Measure': item.secondaryQuantities[0].unitOfMeasure,
+      };
+
+      //adjust by location
+      if (itemsObject.byLocationId[item.locationId] == null){
+        itemsObject.byLocationId[item.locationId] = {
+          'byTakeoffType': {},
+          'count': 0,
+          'quantity': 0,
+          'unitOfMeasure': item.primaryQuantity.unitOfMeasure,
+          'classificationCodeOne': item.primaryQuantity.classificationCodeOne,
+          // 'contentView': item.contentView.id
+        }
+      };
+      // if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView != item.contentView.id){
+      //   itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView = '';
+      // }
+      itemsObject.byLocationId[item.locationId].count += 1;
+      itemsObject.byLocationId[item.locationId].quantity += item.primaryQuantity.quantity;
+      if (itemsObject.byLocationId[item.locationId].byTakeoffType[item.takeoffTypeId] == null){
+        itemsObject.byLocationId[item.locationId].byTakeoffType[item.takeoffTypeId] = this.getItemObject(item);
+      }
+      itemsObject.byLocationId[item.locationId].byTakeoffType[item.takeoffTypeId].count += 1;
+      itemsObject.byLocationId[item.locationId].byTakeoffType[item.takeoffTypeId].quantity += item.primaryQuantity.quantity;
+
 
       //adjust by takeofftypeid
       if (itemsObject.byTakeoffTypeId[item.takeoffTypeId] == null){
@@ -240,7 +309,7 @@ class PackageTable {
       itemsObject.byContentView[item.contentView.id].byTakeoffType[item.takeoffTypeId].count += 1;
       itemsObject.byContentView[item.contentView.id].byTakeoffType[item.takeoffTypeId].quantity += item.primaryQuantity.quantity;
 
-      //adjust by Classification System 1
+      //adjust by Classification System 1 from PrimaryQuantity
       if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne] == null){
         itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne] = {
           'byTakeoffType': {},
@@ -248,12 +317,12 @@ class PackageTable {
           'quantity': 0,
           'unitOfMeasure': item.primaryQuantity.unitOfMeasure,
           'classificationCodeOne': item.primaryQuantity.classificationCodeOne,
-          'contentView': item.contentView.id
+          // 'contentView': item.contentView.id
         }
       };
-      if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView != item.contentView.id){
-        itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView = '';
-      }
+      // if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView != item.contentView.id){
+      //   itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView = '';
+      // }
       itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].count += 1;
       itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].quantity += item.primaryQuantity.quantity;
       if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId] == null){
@@ -261,11 +330,11 @@ class PackageTable {
       }
       itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].count += 1;
       itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].quantity += item.primaryQuantity.quantity;
-      if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].contentView != item.contentView.id){
-        itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].contentView = '';
-      }
+      // if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].contentView != item.contentView.id){
+      //   itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].contentView = '';
+      // }
 
-      //adjust by Classification System 2
+      //adjust by Classification System 2 from SecondaryQuantities
       for(const secondaryQuantity of item.secondaryQuantities){
         if (itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo] == null){
           itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo] = {
@@ -275,12 +344,12 @@ class PackageTable {
             'unitOfMeasure': secondaryQuantity.unitOfMeasure,
             'classificationCodeTwo': secondaryQuantity.classificationCodeTwo,
             'classificationCodeOne': item.primaryQuantity.classificationCodeOne,
-            'contentView': item.contentView.id
+            // 'contentView': item.contentView.id
           }
         };
-        if (itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].contentView != item.contentView.id){
-          itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].contentView = '';
-        }
+        // if (itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].contentView != item.contentView.id){
+        //   itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].contentView = '';
+        // }
         itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].count += 1;
         itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].quantity += secondaryQuantity.quantity;
         if (itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId] == null){
@@ -288,9 +357,9 @@ class PackageTable {
         }
         itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].count += 1;
         itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].quantity += secondaryQuantity.quantity;
-        if (itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].contentView != item.contentView.id){
-          itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].contentView = '';
-        }
+        // if (itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].contentView != item.contentView.id){
+        //   itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].contentView = '';
+        // }
       }
     }
 
@@ -303,7 +372,7 @@ class PackageTable {
       'quantity': 0,
       'unitOfMeasure': item.primaryQuantity.unitOfMeasure,
       'classificationCode': item.primaryQuantity.classificationCodeOne,
-      'contentView': item.contentView.id
+      // 'contentView': item.contentView.id
     }
   }
 
@@ -344,6 +413,10 @@ class PackageTable {
             await this.adjustTypeData();
             break;
           }
+          case 'location':{
+            await this.adjustLocationData();
+            break;
+          }
         }
 
         await this.adjustRawItemsData();
@@ -357,18 +430,98 @@ class PackageTable {
     }
 
     if(this.CurrentDataType == TakeoffDataType.CLASSIFICATIONS){
+      let classificationName = $('input[name="listRadio"]:checked').val();
+      this.dataSet = Object.values(this.systems).find( o => o.name === classificationName).codes;
       this.csvData = this.prepareCSVData();
     }
   };
 
+  async adjustLocationData(){
+    let byLocationArray = [];
+
+    for(const locationId of Object.keys(this.items.byLocationId)){
+      let currentItem = this.items.byLocationId[locationId];
+      let fullLocationId = this.locationsMap[locationId] || [null];
+      // let lastLocationId = fullLocationId[fullLocationId.length - 1];
+      let insertIndex = 0;
+      for(const currentlocationId of fullLocationId){
+        let locationName = !!currentlocationId ? this.rawLocations.find(l => l.id === currentlocationId).name :'Unassigned';
+        //Here we check if the classification already exists
+        let checkItem = byLocationArray.find(item => item.name === `${locationName}`);
+        if(!!checkItem){
+          checkItem.quantity = parseFloat(checkItem.quantity);
+          checkItem.quantity += currentItem.quantity;
+          checkItem.quantity = checkItem.quantity.toFixed(2);
+          checkItem.count += currentItem.count;
+          checkItem.classification = '';
+          insertIndex = byLocationArray.findIndex(item => item === checkItem) + 1;
+        }
+        // If not, we add as a new item
+        else{
+          let newItem = {
+            'name': locationName,
+            'count': currentItem.count,
+            'quantity': currentItem.quantity,
+            'unit': currentItem.unitOfMeasure,
+            'classification': '',
+            // 'document': currentItem.contentView
+          }
+          if(this.humanReadableData){
+            // here we override its values in case human readable is recquired
+            // newItem.name += ` - ${classification1.description}`;
+            newItem.quantity = newItem.quantity.toFixed(2);
+            // newItem.classification +=  ` - ${lastClassification1.description}`;
+            // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
+          }
+          // byLocationArray.push(newItem);
+          byLocationArray.splice(insertIndex, 0, newItem);
+          insertIndex += 1;
+        }
+      }
+      let locationByTakeoffType = currentItem.byTakeoffType;
+      for(const takeoffTypeId of Object.keys(locationByTakeoffType)){
+        let codeObject = this.getProperClassification(currentItem.byTakeoffType[takeoffTypeId].classificationCode);
+        let currenType = locationByTakeoffType[takeoffTypeId];
+        // Here we prepare each new item to the table
+        let newItem = {
+          'name': takeoffTypeId,
+          'count': currenType.count,
+          'quantity': currenType.quantity,
+          'unit': currenType.unitOfMeasure,
+          'classification': `${codeObject.firstCode.code}`,
+          // 'document': currenType.contentView
+        }
+        if(this.humanReadableData){
+          // here we override its values in case human readable is recquired
+          newItem.name = this.types[takeoffTypeId].name,
+          newItem.quantity = newItem.quantity.toFixed(2);
+          newItem.classification +=  ` - ${codeObject.firstCode.description}`;
+          // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
+        }
+        // here we add the new item based on its classification
+        byLocationArray.splice(insertIndex, 0, newItem); 
+      }
+    }
+
+    this.dataSet = byLocationArray;
+  }
+
   async adjustRawItemsData(){
     let rawItemsArray = [];
 
-    for(const itemId of Object.keys(this.items.rawItems)){
+    for(const itemId of Object.keys(this.items.rawItemsPrimaryQ)){
       // here we replace the document id by it's name
-      this.items.rawItems[itemId].Document = this.views[this.items.rawItems[itemId].Document].name;
+      this.items.rawItemsPrimaryQ[itemId].Document = this.views[this.items.rawItemsPrimaryQ[itemId].Document].name;
       rawItemsArray.push(
-        this.items.rawItems[itemId]
+        this.items.rawItemsPrimaryQ[itemId]
+      )
+    }
+
+    for(const itemId of Object.keys(this.items.rawItemsSecondaryQ)){
+      // here we replace the document id by it's name
+      this.items.rawItemsSecondaryQ[itemId].Document = this.views[this.items.rawItemsSecondaryQ[itemId].Document].name;
+      rawItemsArray.push(
+        this.items.rawItemsSecondaryQ[itemId]
       )
     }
     this.rawItemsDataset = rawItemsArray;
@@ -401,14 +554,14 @@ class PackageTable {
             'quantity': currentItem.quantity,
             'unit': currentItem.unitOfMeasure,
             'classification': classification1.firstCode.code,
-            'document': currentItem.contentView
+            // 'document': currentItem.contentView
           }
           if(this.humanReadableData){
             // here we override its values in case human readable is recquired
             newItem.name += ` - ${classification2.description}`;
             newItem.quantity = newItem.quantity.toFixed(2);
             newItem.classification +=  ` - ${classification1.firstCode.description}`;
-            newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
+            // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
           }
           byClassificationSystem2Array.push(newItem);
           insertIndex = byClassificationSystem2Array.length;
@@ -425,14 +578,14 @@ class PackageTable {
           'quantity': currenType.quantity,
           'unit': currenType.unitOfMeasure,
           'classification': byTakeoffClassification.firstCode.code,
-          'document': currenType.contentView
+          // 'document': currenType.contentView
         }
         if(this.humanReadableData){
           // here we override its values in case human readable is recquired
           newItem.name = this.types[takeoffTypeId].name,
           newItem.quantity = newItem.quantity.toFixed(2);
           newItem.classification +=  ` - ${byTakeoffClassification.firstCode.description}`;
-          newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
+          // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
         }
         // here we add the new item based on its classification
         byClassificationSystem2Array.splice(insertIndex, 0, newItem);
@@ -469,14 +622,14 @@ class PackageTable {
             'quantity': currentItem.quantity,
             'unit': currentItem.unitOfMeasure,
             'classification': lastClassification1.code,
-            'document': currentItem.contentView
+            // 'document': currentItem.contentView
           }
           if(this.humanReadableData){
             // here we override its values in case human readable is recquired
             newItem.name += ` - ${classification1.description}`;
             newItem.quantity = newItem.quantity.toFixed(2);
             newItem.classification +=  ` - ${lastClassification1.description}`;
-            newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
+            // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
           }
           byClassificationSystem1Array.push(newItem);
           insertIndex = byClassificationSystem1Array.length;
@@ -492,14 +645,14 @@ class PackageTable {
           'quantity': currenType.quantity,
           'unit': currenType.unitOfMeasure,
           'classification': lastClassification1.code,
-          'document': currenType.contentView
+          // 'document': currenType.contentView
         }
         if(this.humanReadableData){
           // here we override its values in case human readable is recquired
           newItem.name = this.types[takeoffTypeId].name,
           newItem.quantity = newItem.quantity.toFixed(2);
           newItem.classification +=  ` - ${lastClassification1.description}`;
-          newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
+          // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
         }
         // here we add the new item based on its classification
         byClassificationSystem1Array.splice(insertIndex, 0, newItem);
@@ -576,7 +729,7 @@ class PackageTable {
           'quantity': currentItem.quantity.toFixed(2),
           'unit': currentItem.unitOfMeasure,
           'classification': `${codeObject.firstCode.code} - ${codeObject.firstCode.description}`,
-          'document': (Guid_Pattern.test(currentItem.contentView) ? this.views[currentItem.contentView].name : '')
+          // 'document': (Guid_Pattern.test(currentItem.contentView) ? this.views[currentItem.contentView].name : '')
         })
       }
       else{
@@ -586,7 +739,7 @@ class PackageTable {
           'quantity': currentItem.quantity,
           'unit': currentItem.unitOfMeasure,
           'classification': currentItem.classificationCode,
-          'document': currentItem.contentView
+          // 'document': currentItem.contentView
         })
       }
     }
@@ -668,8 +821,7 @@ class PackageTable {
         break;
       }
       case TakeoffDataType.CLASSIFICATIONS: {
-        let classificationName = $('input[name="listRadio"]:checked').val();
-        dataset = Object.values(this.systems).find( o => o.name === classificationName).codes;
+        dataset = this.dataSet;
         break;
       }
     }
@@ -759,6 +911,63 @@ class PackageTable {
     return columns;
   }
 
+  async importCSV(importOption){
+    const { value: file } = await Swal.fire({
+      title: 'Select csv file',
+      input: 'file',
+      inputAttributes: {
+        'accept': '.csv',
+        'aria-label': 'Upload your csv for configuration'
+      },
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Import Classification'
+    })
+
+    console.log('done!')
+
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        let lines = e.target.result.split('\n');
+        let classifications = [];
+        for(line of lines){
+          classifications.push(this.textToObject(line));
+        }
+        switch (importOption) {
+          case 'updateclassifications':
+            let updateStatus = await this.updateClassifications(classifications);
+            break;
+          case 'createclassification':
+            break;
+        }
+      }
+      reader.readAsBinaryString(file)
+    }
+  }
+
+  async updateClassifications(classifications){
+
+    const requestUrl = '/api/forge/takeoff/info';
+    const requestData = {
+      'projectId': this.projectId,
+      'takeoffData': takeoffData,
+      'packageId':this.packageId
+    };
+    await apiClientAsync(requestUrl, requestData, 'post');
+  }
+
+  textToObject(line){
+    let parameters = line.split(',');
+    return {
+      parentCode: parameters[0] || null,
+      code: parameters[1] || null,
+      description: parameters[2] || null,
+      measurementType: parameters[3] || null
+    }
+  }
+
   // export data in takeoff table to CSV file
   async exportCSV() {
     let csvDataCleared = await cleanForCommas(this.csvData);
@@ -798,21 +1007,49 @@ class PackageTable {
 
     this.IsHumanReadable = isHumanReadable();
 
-    let orderBy = $('#group_by').find(":selected").val();
-    switch (orderBy) {
-      case 'primaryclassification':
-        await this.adjustClassificationSystem1Data();
-        break;
-      case 'secondaryclassification':
-        await this.adjustClassificationSystem2Data();
-        break;
-      case 'document':
-        await this.adjustDocumentData();
-        break;
-      case 'takeofftype':
-        await this.adjustTypeData();
-        break;
+    if(!packageTable.packageName || $('#listTitle').html() == 'PACKAGES'){
+      let orderBy = $('#group_by').find(":selected").val();
+      switch (orderBy) {
+        case 'primaryclassification':
+          await this.adjustClassificationSystem1Data();
+          break;
+        case 'secondaryclassification':
+          await this.adjustClassificationSystem2Data();
+          break;
+        case 'document':
+          await this.adjustDocumentData();
+          break;
+        case 'takeofftype':
+          await this.adjustTypeData();
+          break;
+        case 'location':
+          await this.adjustLocationData();
+          break;
+      }
     }
+    else{
+      let classificationName = $('input[name="listRadio"]:checked').val();
+      this.dataset = Object.values(this.systems).find( o => o.name === classificationName).codes;
+    }
+
+    // let orderBy = $('#group_by').find(":selected").val();
+    // switch (orderBy) {
+    //   case 'primaryclassification':
+    //     await this.adjustClassificationSystem1Data();
+    //     break;
+    //   case 'secondaryclassification':
+    //     await this.adjustClassificationSystem2Data();
+    //     break;
+    //   case 'document':
+    //     await this.adjustDocumentData();
+    //     break;
+    //   case 'takeofftype':
+    //     await this.adjustTypeData();
+    //     break;
+    //   case 'location':
+    //     await this.adjustLocationData();
+    //     break;
+    // }
 
     this.csvData = this.prepareCSVData();
 
@@ -888,14 +1125,22 @@ $(document).ready(function () {
       return;
     }
 
-    exportOption = $('input[name="export"]:checked').val();
-    switch( exportOption ){
+    exportImportOption = $('input[name="exportimport"]:checked').val();
+    switch( exportImportOption ){
       case 'exportcurrent':{
         packageTable.exportCSV();
         break;
       };
       case 'exportall':{
         exportAllCSV(); 
+        break;
+      };
+      case 'updateclassifications':{
+        packageTable.importCSV(exportImportOption);
+        break;
+      }
+      case 'createclassification':{
+        packageTable.importCSV(exportImportOption);
         break;
       }
     }
@@ -923,7 +1168,7 @@ $(document).ready(function () {
         if(!packageTable.packageName || $('#listTitle').html() == 'CLASSIFICATION SYSTEMS'){
           $('#list').empty();
           packageTable.CurrentDataType = TakeoffDataType.PACKAGES;
-          dataFetchs = ['packages','systems', 'views'];
+          dataFetchs = ['packages','systems', 'views', 'locations'];
         }
         else{
           packageTable.updatePackageId();
@@ -955,7 +1200,6 @@ $(document).ready(function () {
 
     // packageTable.IsHumanReadable = isHumanReadable();
     // packageTable.packageName = $('input[name="packagesRadio"]:checked').val();
-
     // let dataFetchs;
     // if(!packageTable.packageName){
     //   packageTable.CurrentDataType = TakeoffDataType.PACKAGES;

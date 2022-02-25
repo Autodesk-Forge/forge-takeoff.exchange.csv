@@ -133,6 +133,8 @@ function prepareUserHubsTree() {
         packageTable = null;
       }
 
+      $('#list').empty();
+
       packageTable = new PackageTable('#mainTable', '#secondaryTable', data.node.original.project_id, data.node.id, TakeoffDataType.PACKAGES);
       $('#packages').empty();
       $('#btnRefresh').click();

@@ -104,6 +104,9 @@ router.get('/takeoff/info', jsonParser, async function (req, res) {
       takeoffUrl = config.takeoff.URL.CONTENT_VIEW.format(projectId, systemId);
       break;
     };
+    case 'locations':{
+      takeoffUrl = config.takeoff.URL.LOCATIONS.format(projectId);
+    }
   };
   let takeoffInfoRes = [];
   try {

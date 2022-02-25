@@ -5,7 +5,8 @@
   <title>ACC Takeoff inventory exchange sample</title>
   <meta charset="utf-8" />
   <link rel="shortcut icon" href="https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/raw/master/img/favicon.ico">
-  <!-- Common packages: jQuery, Bootstrap, jsTree -->
+  <!-- Common packages: jQuery, Bootstrap, jsTree, sweetalert2 -->
+  <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.7/jstree.min.js"></script>
@@ -245,13 +246,13 @@
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='export' value='importcurrent' checked>
+                        <input type="radio" name='exportimport' value='exportcurrent' checked>
                       </span>
                       <label class="form-control">Current Package</label>
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='export' value='importall' checked>
+                        <input type="radio" name='exportimport' value='exportall' checked>
                       </span>
                       <label class="form-control">Everything</label>
                     </div>
@@ -260,15 +261,15 @@
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='export' value='exportcurrent' checked>
+                        <input type="radio" name='exportimport' value='updateclassifications' checked>
                       </span>
-                      <label class="form-control">Current Package</label>
+                      <label class="form-control">Update classifications</label>
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='export' value='exportall' checked>
+                        <input type="radio" name='exportimport' value='createclassification' checked>
                       </span>
-                      <label class="form-control">Everything</label>
+                      <label class="form-control">Create Classification System</label>
                     </div>
                   </div>
                 </div>
