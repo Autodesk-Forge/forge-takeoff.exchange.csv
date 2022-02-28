@@ -22,10 +22,7 @@ module.exports = {
     credentials: {
         client_id: process.env.FORGE_CLIENT_ID,
         client_secret: process.env.FORGE_CLIENT_SECRET,
-        callback_url: 'http://localhost:3000/api/forge/callback/oauth'
-        // client_id: process.env.FORGE_CLIENT_ID,
-        // client_secret: process.env.FORGE_CLIENT_SECRET,
-        // callback_url: process.env.FORGE_CALLBACK_URL
+        callback_url: process.env.FORGE_CALLBACK_URL
     },
     scopes: {
         // Required scopes for the server-side application
@@ -53,7 +50,8 @@ module.exports = {
             CONTENT_VIEW:        "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/content-views",
             CLASSIFICATION_SYSTEMS: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems",
             ALL_CLASSIFICATIONS: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems/{1}/classifications",
-            LOCATIONS: "https://developer.api.autodesk.com/construction/locations/v2/projects/{0}/trees/default/nodes"
+            LOCATIONS: "https://developer.api.autodesk.com/construction/locations/v2/projects/{0}/trees/default/nodes",
+            CLASSIFICATIONS_IMPORT: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems/{1}/classifications:import" 
         }
     },
     

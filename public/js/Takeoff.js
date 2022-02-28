@@ -37,6 +37,12 @@ const Guid_Pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 
 var exportOption;
 
+const ImportDataTypes = {
+  CLASSIFICATIONS_IMPORT: 'classifications_import',
+  CLASSIFICATION_CREATE: 'classification_create',
+  PACKAGE_CREATE: 'package_create'
+}
+
 // Data type
 const TakeoffDataType = {
   PACKAGES   : 'packages',
@@ -793,9 +799,9 @@ class PackageTable {
 
   addSystemsToPage(){
     // $('#list').empty();
-    for(const newPackage of Object.values(this.systems).sort((a,b) => (a.name > b.name ? 1 : -1))){
+    for(const newSystem of Object.values(this.systems).sort((a,b) => (a.name > b.name ? 1 : -1))){
       $('#list').append(
-        `<div class="input-group systems_div"><input type='radio' name='listRadio' value='${newPackage.name}' checked><label style='' white-space: nowrap;'>&#160;${newPackage.name}</label><span class='classification_system'>${Object.keys(this.systems).find(key => this.systems[key]==newPackage)}</span></div><br>`
+        `<div class="input-group systems_div"><input type='radio' name='listRadio' value='${newSystem.name}' checked><label style='' white-space: nowrap;'>&#160;${newSystem.name}</label><span class='classification_system'>${Object.keys(this.systems).find(key => this.systems[key]==newSystem)}</span></div><br>`
       );
     }
   }
@@ -925,37 +931,109 @@ class PackageTable {
       confirmButtonText: 'Import Classification'
     })
 
-    console.log('done!')
-
     if (file) {
       const reader = new FileReader()
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         let lines = e.target.result.split('\n');
+        lines.shift();
         let classifications = [];
-        for(line of lines){
+        let classificationName = $('input[name="listRadio"]:checked').val();
+        let systemId = Object.values(this.systems).find(v => v.name === classificationName).id;
+        for(const line of lines){
           classifications.push(this.textToObject(line));
         }
+        let responseBody = null;
         switch (importOption) {
           case 'updateclassifications':
-            let updateStatus = await this.updateClassifications(classifications);
+            responseBody = await this.updateClassifications(classifications, systemId, classificationName);
             break;
           case 'createclassification':
+            const inputOptions = new Promise((resolve) => {
+              setTimeout(() => {
+                resolve({
+                  'CLASSIFICATION_SYSTEM_1' : 'CLASSIFICATION_SYSTEM_1',
+                  'CLASSIFICATION_SYSTEM_2' : 'CLASSIFICATION_SYSTEM_2'
+                })
+              }, 500)
+            })
+            
+            const { value: systemType } = await Swal.fire({
+              title: 'Select a System Type',
+              input: 'radio',
+              inputOptions: inputOptions,
+              inputValidator: (value) => {
+                if (!value) {
+                  return 'You need to choose a System Type!'
+                }
+              }
+            })
+            
+            if (systemType) {
+              const { value: classificationName } = await Swal.fire({
+                title: 'Now enter a name for the classification system',
+                input: 'text',
+                showCancelButton: true,
+                inputValidator: (value) => {
+                  if (!value) {
+                    return 'You need to write something!'
+                  }
+                }
+              })
+              if (classificationName) {
+                responseBody = await this.createClassification(classifications, systemType, classificationName);
+              }
+            }
+            // responseBody = await this.createClassification(classifications, );
             break;
         }
+        Swal.fire({
+          title: 'Status of the Update/Creation',
+          text: JSON.stringify(responseBody),
+          showCancelButton: false,
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        })
       }
       reader.readAsBinaryString(file)
     }
   }
 
-  async updateClassifications(classifications){
+  async createPackage(packageName){
+    const requestUrl = '/api/forge/takeoff/info';
+    const requestData = {
+      'projectId': this.projectId,
+      'takeoffData': ImportDataTypes.PACKAGE_CREATE,
+      'packageName': packageName
+    };
+    let response = await apiClientAsync(requestUrl, requestData, 'post');
+    return response;
+  }
+
+  async createClassification(classifications, systemType, classificationName){
+    const requestUrl = '/api/forge/takeoff/info';
+    const requestData = {
+      'projectId': this.projectId,
+      'takeoffData': ImportDataTypes.CLASSIFICATION_CREATE,
+      'classificationName': classificationName,
+      'systemType': systemType,
+      'classifications': classifications
+    };
+    let response = await apiClientAsync(requestUrl, requestData, 'post');
+    return response;
+  }
+
+  async updateClassifications(classifications, systemId, classificationName){
 
     const requestUrl = '/api/forge/takeoff/info';
     const requestData = {
       'projectId': this.projectId,
-      'takeoffData': takeoffData,
-      'packageId':this.packageId
+      'takeoffData': ImportDataTypes.CLASSIFICATIONS_IMPORT,
+      'classificationName': classificationName,
+      'systemId': systemId,
+      'classifications': classifications
     };
-    await apiClientAsync(requestUrl, requestData, 'post');
+    let response = await apiClientAsync(requestUrl, requestData, 'post');
+    return response;
   }
 
   textToObject(line){
@@ -1032,25 +1110,6 @@ class PackageTable {
       this.dataset = Object.values(this.systems).find( o => o.name === classificationName).codes;
     }
 
-    // let orderBy = $('#group_by').find(":selected").val();
-    // switch (orderBy) {
-    //   case 'primaryclassification':
-    //     await this.adjustClassificationSystem1Data();
-    //     break;
-    //   case 'secondaryclassification':
-    //     await this.adjustClassificationSystem2Data();
-    //     break;
-    //   case 'document':
-    //     await this.adjustDocumentData();
-    //     break;
-    //   case 'takeofftype':
-    //     await this.adjustTypeData();
-    //     break;
-    //   case 'location':
-    //     await this.adjustLocationData();
-    //     break;
-    // }
-
     this.csvData = this.prepareCSVData();
 
     let tableColumns = this.getColumns(this.dataSet);
@@ -1108,7 +1167,6 @@ async function exportAllCSV(){
   downloadAllCSV(csvData);
   $('#executeCSV').show();
   $('.importInProgress').hide();
-
 }
 
 function isHumanReadable(){
@@ -1144,9 +1202,31 @@ $(document).ready(function () {
         break;
       }
     }
-    
   });
 
+  $('#addPackage').click(async () => {
+    const { value: packageName } = await Swal.fire({
+      title: 'Now enter a name for the new Package',
+      input: 'text',
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value) {
+          return 'You need to write something!'
+        }
+      }
+    })
+    if (packageName) {
+      responseBody = await packageTable.createPackage(packageName);
+      Swal.fire({
+        title: 'Status of the Update/Creation',
+        text: JSON.stringify(responseBody),
+        showCancelButton: false,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'OK'
+      });
+      
+    }
+  });
 
   $('#btnRefresh').click(async () => {
     const projectHref = $('#labelProjectHref').text();
@@ -1176,6 +1256,7 @@ $(document).ready(function () {
           dataFetchs = ['items','types'];
         }
         $('#listTitle').html('PACKAGES');
+        $('#addPackage').show();
         $('#tablesTitle').html('INVENTORY');
         break;
       }
@@ -1190,6 +1271,7 @@ $(document).ready(function () {
           packageTable.CurrentDataType = TakeoffDataType.CLASSIFICATIONS;
         }
         $('#listTitle').html('CLASSIFICATION SYSTEMS');
+        $('#addPackage').hide();
         $('#tablesTitle').html('CLASSIFICATIONS');
         break;
       }
@@ -1198,25 +1280,10 @@ $(document).ready(function () {
     $('.clsInProgress').show();
     $('.clsResult').hide();
 
-    // packageTable.IsHumanReadable = isHumanReadable();
-    // packageTable.packageName = $('input[name="packagesRadio"]:checked').val();
-    // let dataFetchs;
-    // if(!packageTable.packageName){
-    //   packageTable.CurrentDataType = TakeoffDataType.PACKAGES;
-    //   dataFetchs = ['packages','systems', 'views'];
-    // }
-    // else{
-    //   packageTable.updatePackageId();
-    //   packageTable.CurrentDataType = TakeoffDataType.ITEMS;
-    //   dataFetchs = ['items','types'];
-    // }
-
     try{
       for(const data of dataFetchs){
         await packageTable.fetchDataAsync(data);
       }
-      // await packageTable.polishDataOfCurrentDataTypeAsync();
-      // packageTable.drawTakeoffTable();  
     }catch(err){
       console.log(err);
     }

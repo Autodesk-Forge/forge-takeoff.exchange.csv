@@ -28,6 +28,7 @@ var config = require('../config');
 
 const { apiClientCallAsync } = require('./common/apiclient');
 const { OAuth } = require('./common/oauth');
+const { ProjectsApi } = require('forge-apis');
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -61,6 +62,64 @@ router.use(async (req, res, next) => {
   req.oauth_token = await oauth.getInternalToken();  
   next();   
 });
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// post different data of takeoff type
+/////////////////////////////////////////////////////////////////////////////////////////////
+router.post('/takeoff/info', jsonParser, async function (req, res) {
+  const projectId = req.body.projectId.split('.')[1];
+  const systemId = req.body.systemId;
+  const classificationName = req.body.classificationName;
+  const classifications = req.body.classifications;
+  const systemType = req.body.systemType;
+  const packageName = req.body.packageName;
+  if (!projectId) {
+    console.error('project id is not provided.');
+    return (res.status(400).json({
+      diagnostic: 'project id is not provided.'
+    }));
+  }  
+
+  let takeoffUrl = null;
+  let body = null;
+  const takeoffData = req.body.takeoffData;
+  switch( takeoffData ){
+    case 'classifications_import':{
+      takeoffUrl = config.takeoff.URL.CLASSIFICATIONS_IMPORT.format(projectId, systemId);
+      body = {
+        'name': classificationName,
+        'classifications': classifications
+      }
+      break;
+    };
+    case 'classification_create':{
+      takeoffUrl = config.takeoff.URL.CLASSIFICATION_SYSTEMS.format(projectId);
+      body = {
+        'name': classificationName,
+        'type': systemType,
+        'classifications': classifications
+      }
+      break;
+    }
+    case 'package_create': {
+      takeoffUrl = config.takeoff.URL.PACKAGES_URL.format(projectId);
+      body = {
+        'name': packageName
+      }
+    }
+  };
+  let takeoffInfoRes = null;
+  try {
+    let newTakeoffInfoRes = await apiClientCallAsync('POST', takeoffUrl, req.oauth_token.access_token, body);
+    takeoffInfoRes = newTakeoffInfoRes;
+  } catch (err) {
+    console.error(err)
+    return (res.status(500).json({
+      diagnostic: 'failed to get the takeoff info'
+    }));
+  }
+  return (res.status(200).json(takeoffInfoRes));
+})
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////
