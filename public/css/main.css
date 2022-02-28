@@ -16,7 +16,17 @@ body {
 #sourceHubs {
   overflow: auto;
   width: 100%;
-  height: calc(100vh - 150px);
+  height: calc(100vh - 100px);
+}
+
+#sourceList {
+  overflow: auto;
+  height: calc(100vh - 100px);
+}
+
+#sourceTable {
+  overflow: auto;
+  height: calc(100vh - 100px);
 }
 
 .InProgressImg {
