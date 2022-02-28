@@ -276,9 +276,6 @@ class PackageTable {
           // 'contentView': item.contentView.id
         }
       };
-      // if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView != item.contentView.id){
-      //   itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView = '';
-      // }
       itemsObject.byLocationId[item.locationId].count += 1;
       itemsObject.byLocationId[item.locationId].quantity += item.primaryQuantity.quantity;
       if (itemsObject.byLocationId[item.locationId].byTakeoffType[item.takeoffTypeId] == null){
@@ -326,9 +323,6 @@ class PackageTable {
           // 'contentView': item.contentView.id
         }
       };
-      // if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView != item.contentView.id){
-      //   itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].contentView = '';
-      // }
       itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].count += 1;
       itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].quantity += item.primaryQuantity.quantity;
       if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId] == null){
@@ -336,9 +330,6 @@ class PackageTable {
       }
       itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].count += 1;
       itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].quantity += item.primaryQuantity.quantity;
-      // if (itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].contentView != item.contentView.id){
-      //   itemsObject.byClassificationSystem1[item.primaryQuantity.classificationCodeOne].byTakeoffType[item.takeoffTypeId].contentView = '';
-      // }
 
       //adjust by Classification System 2 from SecondaryQuantities
       for(const secondaryQuantity of item.secondaryQuantities){
@@ -349,13 +340,9 @@ class PackageTable {
             'quantity': 0,
             'unitOfMeasure': secondaryQuantity.unitOfMeasure,
             'classificationCodeTwo': secondaryQuantity.classificationCodeTwo,
-            'classificationCodeOne': item.primaryQuantity.classificationCodeOne,
-            // 'contentView': item.contentView.id
+            'classificationCodeOne': item.primaryQuantity.classificationCodeOne
           }
         };
-        // if (itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].contentView != item.contentView.id){
-        //   itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].contentView = '';
-        // }
         itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].count += 1;
         itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].quantity += secondaryQuantity.quantity;
         if (itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId] == null){
@@ -363,9 +350,6 @@ class PackageTable {
         }
         itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].count += 1;
         itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].quantity += secondaryQuantity.quantity;
-        // if (itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].contentView != item.contentView.id){
-        //   itemsObject.byClassificationSystem2[secondaryQuantity.classificationCodeTwo].byTakeoffType[item.takeoffTypeId].contentView = '';
-        // }
       }
     }
 
@@ -377,8 +361,7 @@ class PackageTable {
       'count': 0,
       'quantity': 0,
       'unitOfMeasure': item.primaryQuantity.unitOfMeasure,
-      'classificationCode': item.primaryQuantity.classificationCodeOne,
-      // 'contentView': item.contentView.id
+      'classificationCode': item.primaryQuantity.classificationCodeOne
     }
   }
 
@@ -448,7 +431,6 @@ class PackageTable {
     for(const locationId of Object.keys(this.items.byLocationId)){
       let currentItem = this.items.byLocationId[locationId];
       let fullLocationId = this.locationsMap[locationId] || [null];
-      // let lastLocationId = fullLocationId[fullLocationId.length - 1];
       let insertIndex = 0;
       for(const currentlocationId of fullLocationId){
         let locationName = !!currentlocationId ? this.rawLocations.find(l => l.id === currentlocationId).name :'Unassigned';
@@ -474,10 +456,7 @@ class PackageTable {
           }
           if(this.humanReadableData){
             // here we override its values in case human readable is recquired
-            // newItem.name += ` - ${classification1.description}`;
             newItem.quantity = newItem.quantity.toFixed(2);
-            // newItem.classification +=  ` - ${lastClassification1.description}`;
-            // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
           }
           // byLocationArray.push(newItem);
           byLocationArray.splice(insertIndex, 0, newItem);
@@ -502,7 +481,6 @@ class PackageTable {
           newItem.name = this.types[takeoffTypeId].name,
           newItem.quantity = newItem.quantity.toFixed(2);
           newItem.classification +=  ` - ${codeObject.firstCode.description}`;
-          // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
         }
         // here we add the new item based on its classification
         byLocationArray.splice(insertIndex, 0, newItem); 
@@ -567,7 +545,6 @@ class PackageTable {
             newItem.name += ` - ${classification2.description}`;
             newItem.quantity = newItem.quantity.toFixed(2);
             newItem.classification +=  ` - ${classification1.firstCode.description}`;
-            // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
           }
           byClassificationSystem2Array.push(newItem);
           insertIndex = byClassificationSystem2Array.length;
@@ -591,7 +568,6 @@ class PackageTable {
           newItem.name = this.types[takeoffTypeId].name,
           newItem.quantity = newItem.quantity.toFixed(2);
           newItem.classification +=  ` - ${byTakeoffClassification.firstCode.description}`;
-          // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
         }
         // here we add the new item based on its classification
         byClassificationSystem2Array.splice(insertIndex, 0, newItem);
@@ -635,7 +611,6 @@ class PackageTable {
             newItem.name += ` - ${classification1.description}`;
             newItem.quantity = newItem.quantity.toFixed(2);
             newItem.classification +=  ` - ${lastClassification1.description}`;
-            // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
           }
           byClassificationSystem1Array.push(newItem);
           insertIndex = byClassificationSystem1Array.length;
@@ -651,14 +626,12 @@ class PackageTable {
           'quantity': currenType.quantity,
           'unit': currenType.unitOfMeasure,
           'classification': lastClassification1.code,
-          // 'document': currenType.contentView
         }
         if(this.humanReadableData){
           // here we override its values in case human readable is recquired
           newItem.name = this.types[takeoffTypeId].name,
           newItem.quantity = newItem.quantity.toFixed(2);
           newItem.classification +=  ` - ${lastClassification1.description}`;
-          // newItem.document = (Guid_Pattern.test(newItem.document) ? this.views[newItem.document].name : newItem.document = '');
         }
         // here we add the new item based on its classification
         byClassificationSystem1Array.splice(insertIndex, 0, newItem);
@@ -734,8 +707,7 @@ class PackageTable {
           'count': currentItem.count,
           'quantity': currentItem.quantity.toFixed(2),
           'unit': currentItem.unitOfMeasure,
-          'classification': `${codeObject.firstCode.code} - ${codeObject.firstCode.description}`,
-          // 'document': (Guid_Pattern.test(currentItem.contentView) ? this.views[currentItem.contentView].name : '')
+          'classification': `${codeObject.firstCode.code} - ${codeObject.firstCode.description}`
         })
       }
       else{
@@ -745,7 +717,6 @@ class PackageTable {
           'quantity': currentItem.quantity,
           'unit': currentItem.unitOfMeasure,
           'classification': currentItem.classificationCode,
-          // 'document': currentItem.contentView
         })
       }
     }
@@ -951,8 +922,8 @@ class PackageTable {
             const inputOptions = new Promise((resolve) => {
               setTimeout(() => {
                 resolve({
-                  'CLASSIFICATION_SYSTEM_1' : 'CLASSIFICATION_SYSTEM_1',
-                  'CLASSIFICATION_SYSTEM_2' : 'CLASSIFICATION_SYSTEM_2'
+                  'SYSTEM 1' : 'CLASSIFICATION_SYSTEM_1',
+                  'SYSTEM 2' : 'CLASSIFICATION_SYSTEM_2'
                 })
               }, 500)
             })
@@ -1170,31 +1141,39 @@ async function exportAllCSV(){
 }
 
 function isHumanReadable(){
-  return $('input[name="dataTypeToDisplay"]:checked').val() === 'humanReadable'
+  return true;
+  // return $('input[name="dataTypeToDisplay"]:checked').val() === 'humanReadable'
+}
+
+function checkForPackageData(){
+  // Export the current table
+  if( !packageTable || !packageTable.csvData ){
+    alert('Please get the data first.')
+    return false;
+  }
+  return true;
 }
 
 // Event while DOM tree is ready
 $(document).ready(function () {
 
   $('#executeCSV').click(function () {
-    // Export the current table
-    if( !packageTable || !packageTable.csvData ){
-      alert('Please get the data first.')
-      return;
-    }
 
     exportImportOption = $('input[name="exportimport"]:checked').val();
     switch( exportImportOption ){
       case 'exportcurrent':{
-        packageTable.exportCSV();
+        if(checkForPackageData())
+          packageTable.exportCSV();
         break;
       };
       case 'exportall':{
-        exportAllCSV(); 
+        if(checkForPackageData())
+          exportAllCSV(); 
         break;
       };
       case 'updateclassifications':{
-        packageTable.importCSV(exportImportOption);
+        if(checkForPackageData())
+          packageTable.importCSV(exportImportOption);
         break;
       }
       case 'createclassification':{
@@ -1224,7 +1203,7 @@ $(document).ready(function () {
         confirmButtonColor: '#3085d6',
         confirmButtonText: 'OK'
       });
-      
+
     }
   });
 
