@@ -114,9 +114,7 @@ router.post('/takeoff/info', jsonParser, async function (req, res) {
     takeoffInfoRes = newTakeoffInfoRes;
   } catch (err) {
     console.error(err)
-    return (res.status(500).json({
-      diagnostic: 'failed to get the takeoff info'
-    }));
+    takeoffInfoRes = err;
   }
   return (res.status(200).json(takeoffInfoRes));
 })

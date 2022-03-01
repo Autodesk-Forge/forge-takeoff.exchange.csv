@@ -74,6 +74,7 @@ $(document).ready(function () {
 
   $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
     $('#btnRefresh').click();
+    manageImportExportOptions();
   });
 
   $.getJSON("/api/forge/oauth/clientid", function (res) {
@@ -85,6 +86,47 @@ $(document).ready(function () {
   });  
 
 });
+
+//Here we manage available options based on selected data (ITEM or CLASSIFICATIONS)
+function manageImportExportOptions(){
+  const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
+    switch(activeTab){
+      case '#items':
+        disableOptions('import');
+        break;
+      case '#classificationsystems':
+        disableOptions('export');
+        break;
+    }
+}
+
+const ExportImportOptions = {
+  EXPORTCURRENTTABLE: 'exportcurrent',
+  EXPORTALLITEMS: 'exportall',
+  UPDATECLASSIFICATIONS: 'updateclassifications',
+  CREATECLASSIFICATION: 'createclassification'
+} 
+
+const ImportExportRadioName = 'exportimport';
+
+//Here we disable and enable the options based on selected data (ITEM or CLASSIFICATIONS)
+function disableOptions(optionsToDisable){
+  switch(optionsToDisable){
+    case 'export':
+      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.EXPORTCURRENTTABLE}"]`).attr("disabled",false);
+      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.EXPORTALLITEMS}"]`).attr("disabled",true);
+      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.UPDATECLASSIFICATIONS}"]`).attr("disabled",false);
+      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.CREATECLASSIFICATION}"]`).attr("disabled",false);
+      break;
+    case 'import':
+      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.EXPORTCURRENTTABLE}"]`).attr("disabled",false);
+      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.EXPORTALLITEMS}"]`).attr("disabled",false);
+      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.UPDATECLASSIFICATIONS}"]`).attr("disabled",true);
+      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.CREATECLASSIFICATION}"]`).attr("disabled",true);
+      break;
+  }
+  
+}
 
 function prepareUserHubsTree() {
   $('#sourceHubs').jstree({
@@ -138,6 +180,7 @@ function prepareUserHubsTree() {
       packageTable = new PackageTable('#mainTable', '#secondaryTable', data.node.original.project_id, data.node.id, TakeoffDataType.PACKAGES);
       $('#packages').empty();
       $('#btnRefresh').click();
+      manageImportExportOptions();
     }
     if (data != null && data.node != null && (data.node.type == 'bim360projects' )) {
       alert("Only ACC project is supported, please select ACC project!")

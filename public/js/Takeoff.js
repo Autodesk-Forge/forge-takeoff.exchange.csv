@@ -35,8 +35,6 @@ const Editable_String = "(Editable)";
 
 const Guid_Pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-var exportOption;
-
 const ImportDataTypes = {
   CLASSIFICATIONS_IMPORT: 'classifications_import',
   CLASSIFICATION_CREATE: 'classification_create',
@@ -76,7 +74,7 @@ class PackageTable {
     this.currentDataType = currentDataType;
     this.currentDataStyle = null;
     this.isHumanReadable = false;
-    this.csvData = null;
+    this.csvData = [];
     this.packageName = '';
     this.packagesDict = null;
     this.cachedInfo = {
@@ -252,18 +250,22 @@ class PackageTable {
         'Quantity': item.primaryQuantity.quantity,
         'Unit of Measure': item.primaryQuantity.unitOfMeasure,
       };
-      itemsObject.rawItemsSecondaryQ[item.id] = {
-        'Takeoff Name': item.type + ' TYPE',
-        'Classification 1': item.secondaryQuantities[0].classificationCodeOne,
-        'Classification 2': item.secondaryQuantities[0].classificationCodeTwo,
-        'Document': item.contentView.id,
-        'Location': item.locationId,
-        'ID': item.id,
-        'Type': item.type,
-        'Output Name': item.secondaryQuantities[0].outputName,
-        'Quantity': item.secondaryQuantities[0].quantity,
-        'Unit of Measure': item.secondaryQuantities[0].unitOfMeasure,
-      };
+      let secondaryQuantities = item.secondaryQuantities[0];
+      //now we remove those unassigned by 2 classifications
+      if(!!secondaryQuantities){
+        itemsObject.rawItemsSecondaryQ[item.id] = {
+          'Takeoff Name': item.type + ' TYPE',
+          'Classification 1': secondaryQuantities ? secondaryQuantities.classificationCodeOne : 'Unassigned',
+          'Classification 2': secondaryQuantities ? secondaryQuantities.classificationCodeTwo : 'Unassigned',
+          'Document': item.contentView.id,
+          'Location': item.locationId,
+          'ID': item.id,
+          'Type': item.type,
+          'Output Name': secondaryQuantities ? secondaryQuantities.outputName : 'Unassigned',
+          'Quantity': secondaryQuantities ? secondaryQuantities.quantity : 'Unassigned',
+          'Unit of Measure': secondaryQuantities ? secondaryQuantities.unitOfMeasure : 'Unassigned',
+        };
+      }
 
       //adjust by location
       if (itemsObject.byLocationId[item.locationId] == null){
@@ -428,10 +430,12 @@ class PackageTable {
   async adjustLocationData(){
     let byLocationArray = [];
 
+    //here we iterate through all locationIds available
     for(const locationId of Object.keys(this.items.byLocationId)){
       let currentItem = this.items.byLocationId[locationId];
       let fullLocationId = this.locationsMap[locationId] || [null];
       let insertIndex = 0;
+      //Now we'll create or increment items for each location based on locationId hierarchy (considering all of the parents)
       for(const currentlocationId of fullLocationId){
         let locationName = !!currentlocationId ? this.rawLocations.find(l => l.id === currentlocationId).name :'Unassigned';
         //Here we check if the classification already exists
@@ -493,6 +497,7 @@ class PackageTable {
   async adjustRawItemsData(){
     let rawItemsArray = [];
 
+    //Here we iterate through primary quantities of each item
     for(const itemId of Object.keys(this.items.rawItemsPrimaryQ)){
       // here we replace the document id by it's name
       this.items.rawItemsPrimaryQ[itemId].Document = this.views[this.items.rawItemsPrimaryQ[itemId].Document].name;
@@ -501,6 +506,7 @@ class PackageTable {
       )
     }
 
+    //Here we iterate through secondary quantities of each item
     for(const itemId of Object.keys(this.items.rawItemsSecondaryQ)){
       // here we replace the document id by it's name
       this.items.rawItemsSecondaryQ[itemId].Document = this.views[this.items.rawItemsSecondaryQ[itemId].Document].name;
@@ -514,11 +520,13 @@ class PackageTable {
   async adjustClassificationSystem2Data(){
     let byClassificationSystem2Array = [];
 
+    //Here we iterate through classification code 2
     for(const classificationCodeTwo of Object.keys(this.items.byClassificationSystem2)){
       let currentItem = this.items.byClassificationSystem2[classificationCodeTwo];
       let fullClassification2 = await this.getFullClassificationMap(classificationCodeTwo, Systems.System2);
       let classification1 = await this.getProperClassification(currentItem.classificationCodeOne);
       let insertIndex = 0;
+      //Now we'll create or increment items for each classification based on classificationCodeTwo hierarchy (considering all of the parents)
       for(const classification2 of fullClassification2){
         //Here we check if the classification already exists
         let checkItem = byClassificationSystem2Array.find(item => item.name === `${classification2.code} - ${classification2.description}`);
@@ -551,6 +559,8 @@ class PackageTable {
         }
       }
       let system2ByTakeoffType = currentItem.byTakeoffType;
+
+      //Now we iterate through takeoff types
       for(const takeoffTypeId of Object.keys(system2ByTakeoffType)){
         let currenType = system2ByTakeoffType[takeoffTypeId];
         let byTakeoffClassification = await this.getProperClassification(currenType.classificationCode);
@@ -580,11 +590,13 @@ class PackageTable {
   async adjustClassificationSystem1Data(){
     let byClassificationSystem1Array = [];
 
+    //Here we iterate through classification code 1
     for(const classificationCodeOne of Object.keys(this.items.byClassificationSystem1)){
       let currentItem = this.items.byClassificationSystem1[classificationCodeOne];
       let fullClassification1 = await this.getFullClassificationMap(classificationCodeOne);
       let lastClassification1 = fullClassification1[fullClassification1.length - 1];
       let insertIndex = 0;
+      //Now we'll create or increment items for each classification based on classificationCodeOne hierarchy (considering all of the parents)
       for(const classification1 of fullClassification1){
         //Here we check if the classification already exists
         let checkItem = byClassificationSystem1Array.find(item => item.name === `${classification1.code} - ${classification1.description}`);
@@ -617,6 +629,8 @@ class PackageTable {
         }
       }
       let system1ByTakeoffType = currentItem.byTakeoffType;
+
+      //Now we iterate through takeoff types
       for(const takeoffTypeId of Object.keys(system1ByTakeoffType)){
         let currenType = system1ByTakeoffType[takeoffTypeId];
         // Here we prepare each new item to the table
@@ -644,6 +658,7 @@ class PackageTable {
   async adjustDocumentData(){
     let byDocumentArray = [];
 
+    //Here we iterate through Content View Ids
     for(const contentViewId of Object.keys(this.items.byContentView)){
       let currentItem = this.items.byContentView[contentViewId];
 
@@ -656,6 +671,8 @@ class PackageTable {
           'classification': '',
           'document': this.views[contentViewId].name
         })
+
+        //Now we iterate through takeoff types
         for(const takeoffTypeId of Object.keys(currentItem.byTakeoffType)){
           let codeObject = this.getProperClassification(currentItem.byTakeoffType[takeoffTypeId].classificationCode);
           byDocumentArray.push({
@@ -697,6 +714,7 @@ class PackageTable {
   async adjustTypeData(){
     let byTakeofftypeArray = [];
 
+    //Here we iterate through takeoff types
     for(const takeoffTypeId of Object.keys(this.items.byTakeoffTypeId)){
       
       let currentItem = this.items.byTakeoffTypeId[takeoffTypeId];
@@ -806,6 +824,7 @@ class PackageTable {
     let columns = this.getColumns(dataset);
     let rawColumns = this.getRawItemsColumns(rawItemsDataset);
 
+    //First we setup the main table
     $(this.tableId).bootstrapTable('destroy');
 
     $(this.tableId).bootstrapTable({
@@ -831,6 +850,7 @@ class PackageTable {
       checkboxHeader: true
     });
 
+    //Then we setup the raw items table
     $(this.rawTableId).bootstrapTable('destroy');
 
     $(this.rawTableId).bootstrapTable({
@@ -911,9 +931,13 @@ class PackageTable {
         let classificationName = $('input[name="listRadio"]:checked').val();
         let systemId = Object.values(this.systems).find(v => v.name === classificationName).id;
         for(const line of lines){
-          classifications.push(this.textToObject(line));
+          let newclassObject = this.textToObject(line);
+          if(!!newclassObject.code)
+            classifications.push(newclassObject);
         }
-        let responseBody = null;
+        let responseBody = {
+          body: 'No change!'
+        };
         switch (importOption) {
           case 'updateclassifications':
             responseBody = await this.updateClassifications(classifications, systemId, classificationName);
@@ -922,8 +946,8 @@ class PackageTable {
             const inputOptions = new Promise((resolve) => {
               setTimeout(() => {
                 resolve({
-                  'SYSTEM 1' : 'CLASSIFICATION_SYSTEM_1',
-                  'SYSTEM 2' : 'CLASSIFICATION_SYSTEM_2'
+                  'CLASSIFICATION_SYSTEM_1' : 'SYSTEM 1',
+                  'CLASSIFICATION_SYSTEM_2' : 'SYSTEM 2'
                 })
               }, 500)
             })
@@ -959,11 +983,13 @@ class PackageTable {
         }
         Swal.fire({
           title: 'Status of the Update/Creation',
-          text: JSON.stringify(responseBody),
+          text: JSON.stringify(responseBody.statusCode != 200 ? responseBody: responseBody.body),
           showCancelButton: false,
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'OK'
         })
+        if(responseBody.statusCode === 200)
+          $('#btnRefresh').click();
       }
       reader.readAsBinaryString(file)
     }
@@ -1009,6 +1035,9 @@ class PackageTable {
 
   textToObject(line){
     let parameters = line.split(',');
+    if(parameters.length != 4){
+      return {};
+    }
     return {
       parentCode: parameters[0] || null,
       code: parameters[1] || null,
@@ -1032,8 +1061,9 @@ class PackageTable {
   // protected: get the data cached to be exported to CSV later
   prepareCSVData() {
 
+    let exportOption = getImportExportOption();
     let csvRows = [];
-    let csvHeader = (exportOption === 'exportall' ? ['Package Name' ] : []);
+    let csvHeader = (exportOption === ExportImportOptions.EXPORTALLITEMS ? ['Package Name' ] : []);
 
     // Set the header of CSV
     for (var key in this.dataSet[0]) {
@@ -1043,7 +1073,7 @@ class PackageTable {
 
     // Set the row data of CSV
     this.dataSet.forEach((item) => {
-      let csvRowTmp = (exportOption === 'exportall' ? [this.packageName] : []);
+      let csvRowTmp = (exportOption === ExportImportOptions.EXPORTALLITEMS ? [this.packageName] : []);
       for (key in item) {
         csvRowTmp.push( item[key] );
       }
@@ -1120,6 +1150,7 @@ async function exportAllCSV(){
   let csvData = [];
   $('#executeCSV').hide();
   $('.importInProgress').show();
+  //Here we iterate through the packages available and append their csvs to csvData for extraction
   for(const packageData of packageTable.packages){
     let temporaryTable = new PackageTable('', '', $('#labelProjectId').text(), $('#labelProjectHref').text(), TakeoffDataType.ITEMS);
     temporaryTable.systems = packageTable.systems;
@@ -1133,7 +1164,7 @@ async function exportAllCSV(){
       await temporaryTable.fetchDataAsync(data);
     }
     await temporaryTable.polishDataOfCurrentDataTypeAsync();
-    csvData = (temporaryTable.csvData.length > 1 ? csvData.concat(temporaryTable.csvData) : csvData);
+    csvData = (temporaryTable.csvData.length > 1? csvData.concat(temporaryTable.csvData) : csvData);
   }
   downloadAllCSV(csvData);
   $('#executeCSV').show();
@@ -1141,10 +1172,12 @@ async function exportAllCSV(){
 }
 
 function isHumanReadable(){
+  //we're returning always true as we already have the raw table
   return true;
   // return $('input[name="dataTypeToDisplay"]:checked').val() === 'humanReadable'
 }
 
+//Here we check if the proper data was acquired for being exported
 function checkForPackageData(){
   // Export the current table
   if( !packageTable || !packageTable.csvData ){
@@ -1154,29 +1187,29 @@ function checkForPackageData(){
   return true;
 }
 
-// Event while DOM tree is ready
+// Event when DOM tree is ready
 $(document).ready(function () {
 
   $('#executeCSV').click(function () {
 
-    exportImportOption = $('input[name="exportimport"]:checked').val();
+    exportImportOption = getImportExportOption();
     switch( exportImportOption ){
-      case 'exportcurrent':{
+      case ExportImportOptions.EXPORTCURRENTTABLE:{
         if(checkForPackageData())
           packageTable.exportCSV();
         break;
       };
-      case 'exportall':{
+      case ExportImportOptions.EXPORTALLITEMS:{
         if(checkForPackageData())
           exportAllCSV(); 
         break;
       };
-      case 'updateclassifications':{
+      case ExportImportOptions.UPDATECLASSIFICATIONS:{
         if(checkForPackageData())
           packageTable.importCSV(exportImportOption);
         break;
       }
-      case 'createclassification':{
+      case ExportImportOptions.CREATECLASSIFICATION:{
         packageTable.importCSV(exportImportOption);
         break;
       }
@@ -1185,7 +1218,7 @@ $(document).ready(function () {
 
   $('#addPackage').click(async () => {
     const { value: packageName } = await Swal.fire({
-      title: 'Now enter a name for the new Package',
+      title: 'Enter a name for the new Package',
       input: 'text',
       showCancelButton: true,
       inputValidator: (value) => {
@@ -1197,13 +1230,14 @@ $(document).ready(function () {
     if (packageName) {
       responseBody = await packageTable.createPackage(packageName);
       Swal.fire({
-        title: 'Status of the Update/Creation',
-        text: JSON.stringify(responseBody),
+        title: 'Status of the package creation',
+        text: JSON.stringify(responseBody.statusCode != 200 ? responseBody: responseBody.body),
         showCancelButton: false,
         confirmButtonColor: '#3085d6',
         confirmButtonText: 'OK'
       });
-
+      if(responseBody.statusCode === 200)
+          $('#btnRefresh').click();
     }
   });
 
@@ -1217,13 +1251,16 @@ $(document).ready(function () {
 
     let dataFetchs;
     packageTable.IsHumanReadable = isHumanReadable();
+    //Here we grab the package/classification name
     packageTable.packageName = $('input[name="listRadio"]:checked').val();
 
-    // get the active tab
+    // here we get the active tab
     const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
     switch( activeTab ){
       case '#items':{
         $('#group_by').show();
+        //in case the tab is for package items, we check if we need to obtain packages, systems, views and locations
+        //this is needed when we come from classifications tab, change the package or change the project
         if(!packageTable.packageName || $('#listTitle').html() == 'CLASSIFICATION SYSTEMS'){
           $('#list').empty();
           packageTable.CurrentDataType = TakeoffDataType.PACKAGES;
@@ -1232,7 +1269,7 @@ $(document).ready(function () {
         else{
           packageTable.updatePackageId();
           packageTable.CurrentDataType = TakeoffDataType.ITEMS;
-          dataFetchs = ['items','types'];
+          dataFetchs = ['types', 'items'];
         }
         $('#listTitle').html('PACKAGES');
         $('#addPackage').show();
@@ -1244,11 +1281,12 @@ $(document).ready(function () {
         if(!packageTable.packageName || $('#listTitle').html() == 'PACKAGES'){
           $('#list').empty();
           packageTable.CurrentDataType = TakeoffDataType.SYSTEMS;
-          dataFetchs = ['systems', 'views'];
+          // dataFetchs = ['systems', 'views'];
         }
         else{
           packageTable.CurrentDataType = TakeoffDataType.CLASSIFICATIONS;
         }
+        dataFetchs = ['systems', 'views'];
         $('#listTitle').html('CLASSIFICATION SYSTEMS');
         $('#addPackage').hide();
         $('#tablesTitle').html('CLASSIFICATIONS');
@@ -1276,6 +1314,10 @@ $(document).ready(function () {
 
 });
 
+//Function to return option selected (import or export)
+function getImportExportOption(){
+  return $('input[name="exportimport"]:checked').val();
+}
 
 // helper function for Request
 function apiClientAsync( requestUrl, requestData=null, requestMethod='get' ) {
