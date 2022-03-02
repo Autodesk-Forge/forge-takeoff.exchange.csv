@@ -15,11 +15,6 @@
 
 ## Demonstration
 
-<!-- blank line -->
-<figure class="video_container">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/2OybBDq-hpE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</figure>
-<!-- blank line -->
 https://www.youtube.com/watch?v=2OybBDq-hpE
 
 Included support for locations and the new endpoints for creating and updating Takeoff packages and classification systems.
@@ -42,12 +37,6 @@ This sample is implemented based on Node.js version of [Learn Forge Tutorial](ht
 ![thumbnail](/thumbnail.png)
 
 ## Demonstration
-
-<!-- blank line -->
-<figure class="video_container">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/_SJVh2si40Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</figure>
-<!-- blank line -->
 
 https://www.youtube.com/watch?v=_SJVh2si40Y
 
