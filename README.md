@@ -11,7 +11,7 @@
 [![MIT](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 [![Level](https://img.shields.io/badge/Level-Intermediate-blue.svg)](http://developer.autodesk.com/)
 
-#UPDATED March/2022
+##UPDATED March/2022
 
 ## Demonstration
 
@@ -111,8 +111,8 @@ Open the browser: [http://localhost:3000](http://localhost:3000).
 
 - **Operate with App after setup**
 
-1. Once you select a project, the sample will load the packages available. **With project and package selected, you need to click on load/refresh button in order to retrieve the results to the table.**
-2. By simply selecting the radio options you can adjust your data to show the available classifications
+1. Once you select a project, the sample will load the packages available. **With project and package/classification selected, you need to click on load/refresh button in order to retrieve the results to the table.**
+2. By simply selecting the classification options you can adjust your data to show the available classifications
 3. The first Table shows the data classified according to the chosen options and the second shows each individual takeoff item (when items panel is selected).
 
 ## Deployment
@@ -147,6 +147,7 @@ To deploy this application to Heroku, the **Callback URL** for Forge must use yo
 - [Data Management API](https://developer.autodesk.com/en/docs/data/v2/overview/)
 - [ACC API](https://developer.autodesk.com/en/docs/bim360/v1/overview/) and [App Provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps)
 - [Autodesk Takeoff API](https://forge.autodesk.com/en/docs/acc/v1/tutorials/takeoff/)
+- [TAKEOFF API UPDATE BLOG](https://forge.autodesk.com/blog/takeoff-api-enhancement-write-access-settings-classifications-and-packages)
 - [Create ACC project, activate and configure Takeoff module](https://knowledge.autodesk.com/support/takeoff/learn-explore/caas/CloudHelp/cloudhelp/ENU/Takeoff-GS/files/Getting-Started-Takeoff-html.html)
 - [View BIM 360/ACC Models Tutorial](http://learnforge.autodesk.io/#/tutorials/viewhubmodels)
 
