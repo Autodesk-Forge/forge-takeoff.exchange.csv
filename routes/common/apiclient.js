@@ -41,6 +41,16 @@ function apiClientCallAsync( requestMethod, url,  access_token, body=null, newOf
                 };
                 break;
             case 'post':
+                options = {
+                    method: requestMethod,
+                    url: url,
+                    headers: {
+                        Authorization: 'Bearer ' + access_token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: body,
+                    json: true
+                };
             case 'patch':
                 options = {
                     method: requestMethod,

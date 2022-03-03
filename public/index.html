@@ -5,7 +5,8 @@
   <title>ACC Takeoff inventory exchange sample</title>
   <meta charset="utf-8" />
   <link rel="shortcut icon" href="https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/raw/master/img/favicon.ico">
-  <!-- Common packages: jQuery, Bootstrap, jsTree -->
+  <!-- Common packages: jQuery, Bootstrap, jsTree, sweetalert2 -->
+  <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.7/jstree.min.js"></script>
@@ -91,99 +92,75 @@
               </div>
             </div>
           </div>
-
-        </div>        
-        <div class="col-md-2">
-          <div class="row">
-            <div style="text-align: center;">
-              <h4>PACKAGE</h4>
-            </div>
-            <div style=" text-align: center;">
-              <div class="row" >
-                <div class="panel panel-default fill" style="overflow: auto; margin-left: 20px; margin-right: 20px;;">
-                  <div id="packages" style=" line-height: 1em; padding-top: 10px; text-align: left; margin-left: 5px; margin-right: 5px; white-space: nowrap;">
-                    
+        </div> 
+        <div class="col-md-8">
+          <ul class="nav nav-tabs" id="takeoffTableTabs">
+            <li class="active"><a data-toggle="tab" href="#items"><b>ITEMS</b></a>
+            </li>
+            <li><a data-toggle="tab" href="#classificationsystems"><b>CLASSIFICATIONS</b></a>
+            </li>
+          </ul>
+          <div class="col-md-3" id="sourceList">
+            <div class="row">
+              <div style="text-align: center; white-space: space nowrap;">
+                <h4 id="listTitle" style="display: inline-block;"></h4>
+                <button id="addPackage" type="button" class="btn btn-primary" style="display: inline-block;">+</button>
+              </div>
+              <div style=" text-align: center;">
+                <div class="row" >
+                  <div class="panel panel-default fill" style="overflow: auto; margin-left: 20px; margin-right: 20px;;">
+                    <div id="list" style=" line-height: 1em; padding-top: 10px; text-align: left; margin-left: 5px; margin-right: 5px; white-space: nowrap;">
+                      
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="col-md-6">
-          <div class="row">
-            <div style="text-align: center;">
-              <h4>INVENTORY</h4>
-            </div>
-            <div id="items" >
-              <div class="clsInProgress" hidden>
-                  <div style="text-align: center;">
-                    <img src="res/Bars-1s-200px.svg" class="InProgressImg">
-                  </div>
+          <div class="col-md-9" id="sourceTable">
+            <div class="row">
+              <div style="text-align: center;">
+                <h4 id="tablesTitle"></h4>
               </div>
-            </div>
-            <div id="statsView" class="clsResult">
-              <div class="row">
-                <div style="padding-top: 10px; text-align: left;">
-                  <div class="col-md-3">
-                    <div class="input-group">
-                      <span class="input-group-addon beautiful">
-                        <input type="radio" name="group_by" value="primaryclassification">
-                      </span>
-                      <span>
-                        <label type="text" class="form-control">PRIMARY</label>
-                      </span>
+              <div id="items" >
+                <div class="clsInProgress" hidden>
+                    <div style="text-align: center;">
+                      <img src="res/Bars-1s-200px.svg" class="InProgressImg">
                     </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="input-group">
-                      <span class="input-group-addon beautiful">
-                        <input type="radio" name="group_by" value="secondaryclassification">
-                      </span>
-                      <span>
-                        <label type="text" class="form-control">SECONDARY</label>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="input-group">
-                      <span class="input-group-addon beautiful">
-                        <input type="radio" name="group_by" value="document" checked>
-                      </span>
-                      <span>
-                        <label type="text" class="form-control">DOCUMENT</label>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="input-group">
-                      <span class="input-group-addon beautiful">
-                        <input type="radio" name="group_by" value="takeofftype">
-                      </span>
-                      <span>
-                        <label type="text" class="form-control">TAKEOFF TYPE</label>
-                      </span>
-                    </div>
-                  </div>
                 </div>
               </div>
-              <div class="row">
-                <div style="padding-left: 20px; padding-right: 20px; text-align: left;">
-                  <table class="table table-striped table-bordered table-hover" id="itemsTable">
-                  </table>
+              <div id="statsView" class="clsResult">
+                <div class="row" id="packagesRow">
+                  <div style="padding-top: 10px; text-align: center;">
+                    <select class="custom-select" id="group_by">
+                      <option selected value="primaryclassification">PRIMARY CLASSIFICATION</option>
+                      <option value="secondaryclassification">SECONDARY CLASSIFICATION</option>
+                      <option value="document">DOCUMENT</option>
+                      <option value="takeofftype">TAKEOFF TYPE</option>
+                      <option value="location">LOCATION</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <div class="row">
-                
-              </div>
-              <div class="row">
-                <div style="padding-left: 20px; padding-right: 20px; text-align: left;">
-                  <table class="table table-striped table-bordered table-hover" id="rawItemsTable">
-                  </table>
+                <div class="row">
+                  <div style="padding-left: 20px; padding-right: 20px; text-align: left;">
+                    <table class="table table-striped table-bordered table-hover" id="mainTable">
+                    </table>
+                  </div>
+                </div>
+                <div class="row">
+                  
+                </div>
+                <div class="row">
+                  <div style="padding-left: 20px; padding-right: 20px; text-align: left;">
+                    <table class="table table-striped table-bordered table-hover" id="secondaryTable">
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </div>       
+        
         <div class="col-md-2" id="excel_handle">
           <div class="row">
             <div style="text-align: center;">
@@ -192,7 +169,7 @@
           </div>
           <div class="row ">
             <div style="padding-top: 10px; text-align: center; margin-left: 20px;">
-              <div class="row">
+              <!-- <div class="row">
                 <div style="padding-top: 10px; text-align: left;">
                   <div class="col-lg-12">
                     <div style="text-align: left;">
@@ -212,7 +189,7 @@
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> -->
               <div class="btn-group btn-lg">
                 <div style="padding-top: 10px;">
                   <button class="btn btn-primary" id="btnRefresh">
@@ -230,15 +207,30 @@
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='export' value='exportcurrent' checked>
+                        <input type="radio" name='exportimport' value='exportcurrent' checked>
                       </span>
-                      <label class="form-control">Current Package</label>
+                      <label class="form-control">Current Table</label>
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='export' value='exportall' checked>
+                        <input type="radio" name='exportimport' value='exportall' checked>
                       </span>
                       <label class="form-control">Everything</label>
+                    </div>
+                    <div style="text-align: left;">
+                      <label>Import from csv:</label>
+                    </div>
+                    <div class="input-group">
+                      <span class="input-group-addon">
+                        <input type="radio" name='exportimport' value='updateclassifications' checked>
+                      </span>
+                      <label class="form-control">Update classifications</label>
+                    </div>
+                    <div class="input-group">
+                      <span class="input-group-addon">
+                        <input type="radio" name='exportimport' value='createclassification' checked>
+                      </span>
+                      <label class="form-control">Create Classification System</label>
                     </div>
                   </div>
                 </div>
@@ -255,7 +247,6 @@
                   </button>
                 </div>
               </div>
-              <br />
             </div>
           </div>
         </div>

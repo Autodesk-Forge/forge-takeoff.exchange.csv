@@ -20,6 +20,7 @@
 module.exports = {
     // Set environment variables or hard-code here
     credentials: {
+        
         client_id: process.env.FORGE_CLIENT_ID,
         client_secret: process.env.FORGE_CLIENT_SECRET,
         callback_url: process.env.FORGE_CALLBACK_URL
@@ -49,7 +50,9 @@ module.exports = {
             TAKEOFF_TYPE:        "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/packages/{1}/takeoff-types/{2}",
             CONTENT_VIEW:        "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/content-views",
             CLASSIFICATION_SYSTEMS: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems",
-            ALL_CLASSIFICATIONS: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems/{1}/classifications"            
+            ALL_CLASSIFICATIONS: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems/{1}/classifications",
+            LOCATIONS: "https://developer.api.autodesk.com/construction/locations/v2/projects/{0}/trees/default/nodes",
+            CLASSIFICATIONS_IMPORT: "https://developer.api.autodesk.com/construction/takeoff/v1/projects/{0}/classification-systems/{1}/classifications:import" 
         }
     },
     

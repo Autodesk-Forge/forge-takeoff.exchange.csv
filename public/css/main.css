@@ -16,7 +16,17 @@ body {
 #sourceHubs {
   overflow: auto;
   width: 100%;
-  height: calc(100vh - 150px);
+  height: calc(100vh - 100px);
+}
+
+#sourceList {
+  overflow: auto;
+  height: calc(100vh - 100px);
+}
+
+#sourceTable {
+  overflow: auto;
+  height: calc(100vh - 100px);
 }
 
 .InProgressImg {
@@ -26,4 +36,17 @@ body {
 
 .highlight tr {
   background: #ddd;
+}
+
+.systems_div > .classification_system {
+  display: none;
+}
+
+.systems_div:hover > .classification_system {
+  display: inline;
+  position: absolute;
+  top: 1.5em;
+  left: 1.5em;
+  background: rgb(218, 214, 214);
+  border: 1px solid black;
 }
