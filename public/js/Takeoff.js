@@ -1082,6 +1082,12 @@ class PackageTable {
     return csvRows;
   };
 
+  async refreshPackages(){
+    await this.fetchDataAsync('packages');
+    $('#list').empty();
+    this.drawTakeoffTable();
+  }
+
   async refreshTable() {
 
     this.IsHumanReadable = isHumanReadable();
@@ -1231,13 +1237,13 @@ $(document).ready(function () {
       responseBody = await packageTable.createPackage(packageName);
       Swal.fire({
         title: 'Status of the package creation',
-        text: JSON.stringify(responseBody.statusCode != 200 ? responseBody: responseBody.body),
+        text: JSON.stringify(responseBody.statusCode != 201 ? responseBody: responseBody.body),
         showCancelButton: false,
         confirmButtonColor: '#3085d6',
         confirmButtonText: 'OK'
       });
-      if(responseBody.statusCode === 200)
-          $('#btnRefresh').click();
+      if(responseBody.statusCode === 201)
+        await packageTable.refreshPackages();
     }
   });
 
@@ -1273,6 +1279,7 @@ $(document).ready(function () {
         }
         $('#listTitle').html('PACKAGES');
         $('#addPackage').show();
+        $('#secondaryTable').show();
         $('#tablesTitle').html('INVENTORY');
         break;
       }
@@ -1289,6 +1296,7 @@ $(document).ready(function () {
         dataFetchs = ['systems', 'views'];
         $('#listTitle').html('CLASSIFICATION SYSTEMS');
         $('#addPackage').hide();
+        $('#secondaryTable').hide();
         $('#tablesTitle').html('CLASSIFICATIONS');
         break;
       }
