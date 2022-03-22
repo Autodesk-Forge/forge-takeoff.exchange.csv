@@ -64,6 +64,42 @@ router.use(async (req, res, next) => {
 });
 
 /////////////////////////////////////////////////////////////////////////////////////////////
+/// patch different data of takeoff type
+/////////////////////////////////////////////////////////////////////////////////////////////
+router.patch('/takeoff/info', jsonParser, async function (req, res) {
+  const projectId = req.body.projectId.split('.')[1];
+  const measurementSystem = req.body.measurementSystem;
+  if (!projectId) {
+    console.error('project id is not provided.');
+    return (res.status(400).json({
+      diagnostic: 'project id is not provided.'
+    }));
+  }  
+
+  let takeoffUrl = null;
+  let body = null;
+  const takeoffData = req.body.takeoffData;
+  switch( takeoffData ){
+    case 'settings':{
+      takeoffUrl = config.takeoff.URL.SETTINGS.format(projectId);
+      body = {
+        'measurementSystem': measurementSystem
+      }
+      break;
+    };
+  };
+  let takeoffInfoRes = null;
+  try {
+    let newTakeoffInfoRes = await apiClientCallAsync('PATCH', takeoffUrl, req.oauth_token.access_token, body);
+    takeoffInfoRes = newTakeoffInfoRes;
+  } catch (err) {
+    console.error(err)
+    takeoffInfoRes = err;
+  }
+  return (res.status(200).json(takeoffInfoRes));
+})
+
+/////////////////////////////////////////////////////////////////////////////////////////////
 /// post different data of takeoff type
 /////////////////////////////////////////////////////////////////////////////////////////////
 router.post('/takeoff/info', jsonParser, async function (req, res) {
@@ -73,6 +109,7 @@ router.post('/takeoff/info', jsonParser, async function (req, res) {
   const classifications = req.body.classifications;
   const systemType = req.body.systemType;
   const packageName = req.body.packageName;
+  const measurementSystem = req.body.measurementSystem;
   if (!projectId) {
     console.error('project id is not provided.');
     return (res.status(400).json({
@@ -106,6 +143,7 @@ router.post('/takeoff/info', jsonParser, async function (req, res) {
       body = {
         'name': packageName
       }
+      break;
     }
   };
   let takeoffInfoRes = null;
@@ -163,17 +201,27 @@ router.get('/takeoff/info', jsonParser, async function (req, res) {
     };
     case 'locations':{
       takeoffUrl = config.takeoff.URL.LOCATIONS.format(projectId);
+      break;
+    };
+    case 'settings':{
+      takeoffUrl = config.takeoff.URL.SETTINGS.format(projectId);
+      break;
     }
   };
   let takeoffInfoRes = [];
   try {
     let newTakeoffInfoRes = await apiClientCallAsync('GET', takeoffUrl, req.oauth_token.access_token);
-    takeoffInfoRes.push(...newTakeoffInfoRes.body.results);
-    let offset = 0;
-    while(newTakeoffInfoRes.body.pagination.nextUrl != null){
-      offset += newTakeoffInfoRes.body.results.length;
-      newTakeoffInfoRes = await apiClientCallAsync('GET', takeoffUrl, req.oauth_token.access_token, null, offset);
+    if(takeoffData != 'settings' ){
       takeoffInfoRes.push(...newTakeoffInfoRes.body.results);
+      let offset = 0;
+      while(newTakeoffInfoRes.body.pagination.nextUrl != null){
+        offset += newTakeoffInfoRes.body.results.length;
+        newTakeoffInfoRes = await apiClientCallAsync('GET', takeoffUrl, req.oauth_token.access_token, null, offset);
+        takeoffInfoRes.push(...newTakeoffInfoRes.body.results);
+      }
+    }
+    else{
+      takeoffInfoRes = newTakeoffInfoRes;
     }
   } catch (err) {
     console.error(err)

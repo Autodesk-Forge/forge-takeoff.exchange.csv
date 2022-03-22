@@ -16,6 +16,8 @@
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
 
+// const { patch } = require("../../routes/takeoff.packages");
+
 // Define method String.replaceAll 
 if (!String.prototype.replaceAll) {
   String.prototype.replaceAll = function (search, replacement) {
@@ -27,11 +29,24 @@ if (!String.prototype.replaceAll) {
 // the inventory table instance
 var packageTable = null;
 
-// the following 2 strings will be used to replace ',' and '\n'
-const Enter_Replacement = '\xfe';
-const Comma_Replacement = '\xfd';
+const ExportLabelsId = {
+  ExportCurrentMainTable: 'exportcurrentmainlabel',
+  ExportCurrentSecondaryTable: 'exportcurrentsecondarylabel',
+  ExportAllMainTable: 'exportallmainlabel',
+  ExportAllSecondaryTable: 'exportallsecondaryabel'
+}
 
-const Editable_String = "(Editable)";
+const ClassificationsExportLabels = {
+  ExportCurrentMainTable: 'Current Classifications'
+}
+
+const PackagesExportLabels = {
+  ExportCurrentMainTable: 'Current Package - Grouped',
+  ExportCurrentSecondaryTable: 'Current Package - All Items',
+  ExportAllMainTable: 'All Packages - Grouped',
+  ExportAllSecondaryTable: 'All Packages - All Items'
+}
+
 
 const Guid_Pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -46,12 +61,18 @@ const TakeoffDataType = {
   PACKAGES   : 'packages',
   ITEMS : 'items',
   SYSTEMS: 'systems',
-  CLASSIFICATIONS: 'classifications'
+  CLASSIFICATIONS: 'classifications',
+  SETTINGS: 'settings'
 }
 
 const Systems = {
   System1 : 'CLASSIFICATION_SYSTEM_1',
   System2 : 'CLASSIFICATION_SYSTEM_2'
+}
+
+const Tables = {
+  MainTable : 'mainTable',
+  SecondaryTable : 'secondaryTable'
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -412,7 +433,7 @@ class PackageTable {
 
         await this.adjustRawItemsData();
 
-        this.csvData = this.prepareCSVData();
+        // this.csvData = this.prepareCSVData();
         
       }
       catch(err){
@@ -422,8 +443,15 @@ class PackageTable {
 
     if(this.CurrentDataType == TakeoffDataType.CLASSIFICATIONS){
       let classificationName = $('input[name="listRadio"]:checked').val();
-      this.dataSet = Object.values(this.systems).find( o => o.name === classificationName).codes;
-      this.csvData = this.prepareCSVData();
+      try{
+        this.dataSet = Object.values(this.systems).find( o => o.name === classificationName).codes;
+      }
+      catch(err){
+        console.log(err);
+        this.dataSet = {};
+      }
+      
+      // this.csvData = this.prepareCSVData();
     }
   };
 
@@ -781,7 +809,7 @@ class PackageTable {
     // $('#list').empty();
     for(const newPackage of this.packages.sort((a,b) => (a.name > b.name ? 1 : -1))){
       $('#list').append(
-        `<div class="input-group" ><input type='radio'  name='listRadio' value='${newPackage.name}' checked><label style='' white-space: nowrap;'>&#160;${newPackage.name}</label></div><br>`
+        `<div class="input-group" ><input type='radio'  name='listRadio' id='${newPackage.name.replaceAll(' ', '_')}' value='${newPackage.name}' onchange='handleListChange()' checked><label style='' white-space: nowrap;'>&#160;${newPackage.name}</label></div><br>`
       );
     }
   }
@@ -790,7 +818,7 @@ class PackageTable {
     // $('#list').empty();
     for(const newSystem of Object.values(this.systems).sort((a,b) => (a.name > b.name ? 1 : -1))){
       $('#list').append(
-        `<div class="input-group systems_div"><input type='radio' name='listRadio' value='${newSystem.name}' checked><label style='' white-space: nowrap;'>&#160;${newSystem.name}</label><span class='classification_system'>${Object.keys(this.systems).find(key => this.systems[key]==newSystem)}</span></div><br>`
+        `<div class="input-group systems_div"><input type='radio' name='listRadio' id='${newSystem.name.replaceAll(' ', '_')}' value='${newSystem.name}' onchange='handleListChange()' checked><label style='' white-space: nowrap;'>&#160;${newSystem.name}</label><span class='classification_system'>${Object.keys(this.systems).find(key => this.systems[key]==newSystem)}</span></div><br>`
       );
     }
   }
@@ -800,6 +828,7 @@ class PackageTable {
 
     let dataset = [];
     let rawItemsDataset = [];
+    let drawRawItemsTable = false;
 
     switch(this.currentDataType){
       case TakeoffDataType.PACKAGES: {
@@ -813,9 +842,11 @@ class PackageTable {
       case TakeoffDataType.ITEMS: {
         dataset = this.dataSet;
         rawItemsDataset = this.rawItemsDataset;
+        drawRawItemsTable = true;
         break;
       }
       case TakeoffDataType.CLASSIFICATIONS: {
+        this.refreshSystems();
         dataset = this.dataSet;
         break;
       }
@@ -853,28 +884,30 @@ class PackageTable {
     //Then we setup the raw items table
     $(this.rawTableId).bootstrapTable('destroy');
 
-    $(this.rawTableId).bootstrapTable({
-      data: rawItemsDataset,
-      editable: true,
-      clickToSelect: true,
-      cache: false,
-      showToggle: false,
-      showPaginationSwitch: true,
-      pagination: true,
-      pageList: [5, 10],
-      pageSize: 5,
-      pageNumber: 1,
-      uniqueId: 'rawItems',
-      striped: true,
-      search: true,
-      showRefresh: true,
-      minimumCountColumns: 2,
-      smartDisplay: true,
-      columns: rawColumns,
-      multipleSelectRow: false,
-      singleSelect: true,
-      checkboxHeader: true
-    });
+    if(drawRawItemsTable){
+      $(this.rawTableId).bootstrapTable({
+        data: rawItemsDataset,
+        editable: true,
+        clickToSelect: true,
+        cache: false,
+        showToggle: false,
+        showPaginationSwitch: true,
+        pagination: true,
+        pageList: [5, 10],
+        pageSize: 5,
+        pageNumber: 1,
+        uniqueId: 'rawItems',
+        striped: true,
+        search: true,
+        showRefresh: true,
+        minimumCountColumns: 2,
+        smartDisplay: true,
+        columns: rawColumns,
+        multipleSelectRow: false,
+        singleSelect: true,
+        checkboxHeader: true
+      });
+    }
     
   };
 
@@ -926,72 +959,129 @@ class PackageTable {
       const reader = new FileReader()
       reader.onload = async (e) => {
         let lines = e.target.result.split('\n');
-        lines.shift();
-        let classifications = [];
-        let classificationName = $('input[name="listRadio"]:checked').val();
-        let systemId = Object.values(this.systems).find(v => v.name === classificationName).id;
-        for(const line of lines){
-          let newclassObject = this.textToObject(line);
-          if(!!newclassObject.code)
-            classifications.push(newclassObject);
-        }
-        let responseBody = {
-          body: 'No change!'
-        };
-        switch (importOption) {
-          case 'updateclassifications':
-            responseBody = await this.updateClassifications(classifications, systemId, classificationName);
-            break;
-          case 'createclassification':
-            const inputOptions = new Promise((resolve) => {
-              setTimeout(() => {
-                resolve({
-                  'CLASSIFICATION_SYSTEM_1' : 'SYSTEM 1',
-                  'CLASSIFICATION_SYSTEM_2' : 'SYSTEM 2'
-                })
-              }, 500)
-            })
-            
-            const { value: systemType } = await Swal.fire({
-              title: 'Select a System Type',
-              input: 'radio',
-              inputOptions: inputOptions,
-              inputValidator: (value) => {
-                if (!value) {
-                  return 'You need to choose a System Type!'
-                }
-              }
-            })
-            
-            if (systemType) {
-              const { value: classificationName } = await Swal.fire({
-                title: 'Now enter a name for the classification system',
-                input: 'text',
-                showCancelButton: true,
-                inputValidator: (value) => {
-                  if (!value) {
-                    return 'You need to write something!'
+        if(this.validateCSV(lines[0])){
+          lines.shift();
+          let classifications = [];
+          for(const line of lines){
+            let newclassObject = this.textToObject(line);
+            if(!!newclassObject.code)
+              classifications.push(newclassObject);
+          }
+          let responseBody = {
+            body: 'No change!'
+          };
+          switch (importOption) {
+            case 'updateclassifications':
+              let classificationName = $('input[name="listRadio"]:checked').val();
+              let systemId = Object.values(this.systems).find(v => v.name === classificationName).id;
+              responseBody = await this.updateClassifications(classifications, systemId, classificationName);
+              break;
+            case 'createclassification':
+              if (Object.keys(this.systems).length === 0){
+                let measurementSystemOK = await this.checkSettings();
+                
+                if (measurementSystemOK) {
+                  const { value: classificationName } = await Swal.fire({
+                    title: 'Classification Name',
+                    input: 'text',
+                    showCancelButton: true,
+                    inputValidator: (value) => {
+                      if (!value) {
+                        return 'You need to write something!'
+                      }
+                    }
+                  })
+                  if (classificationName) {
+                    responseBody = await this.createClassification(classifications, Systems.System1, classificationName);
                   }
                 }
-              })
-              if (classificationName) {
-                responseBody = await this.createClassification(classifications, systemType, classificationName);
               }
-            }
-            // responseBody = await this.createClassification(classifications, );
-            break;
+              else{
+                const { value: classificationName } = await Swal.fire({
+                  title: 'Classification Name',
+                  input: 'text',
+                  showCancelButton: true,
+                  inputValidator: (value) => {
+                    if (!value) {
+                      return 'You need to write something!'
+                    }
+                  }
+                })
+                if (classificationName) {
+                  responseBody = await this.createClassification(classifications, Systems.System2, classificationName);
+                }
+              }
+              break;
+          }
+          Swal.fire({
+            icon: responseBody.statusCode != 200 && responseBody.statusCode != 201 ? 'error': 'success',
+            title: 'Status',
+            html: JSON.stringify(responseBody.statusCode != 200 && responseBody.statusCode != 201 ? json2txt(responseBody) : json2txt(responseBody.body)),
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK'
+          })
+          if(responseBody.statusCode === 200 || responseBody.statusCode === 201 )
+            $('#btnRefresh').click();
         }
-        Swal.fire({
-          title: 'Status of the Update/Creation',
-          text: JSON.stringify(responseBody.statusCode != 200 ? responseBody: responseBody.body),
-          showCancelButton: false,
-          confirmButtonColor: '#3085d6',
-          confirmButtonText: 'OK'
-        })
-        if(responseBody.statusCode === 200)
-          $('#btnRefresh').click();
+        else{
+          Swal.fire({
+            icon:'error',
+            title: 'Status',
+            text: 'Invalid csv!',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK'
+          })
+        }
       }
       reader.readAsBinaryString(file)
+    }
+  }
+
+  async checkSettings(){
+
+    let settingsResponse = await this.getSettings();
+
+    if (settingsResponse.statusCode === 200 && !settingsResponse.body.measurementSystem){
+      const inputOptions = new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            'IMPERIAL' : 'Imperial',
+            'METRIC' : 'Metric'
+          })
+        }, 100)
+      })
+      
+      const { value: measurementSystem } = await Swal.fire({
+        title: 'Select a Measurement System',
+        input: 'radio',
+        inputOptions: inputOptions,
+        inputValidator: (value) => {
+          if (!value) {
+            return 'You need to choose a Measurement System!'
+          }
+        }
+      })
+      
+      if (measurementSystem) {
+        let patchSettingsResponse = await this.patchSettings(measurementSystem);
+        return patchSettingsResponse.statusCode === 200 ? true : false;
+      }
+    }
+    else{
+      return settingsResponse.statusCode === 200 && !!settingsResponse.body.measurementSystem ? true : false;
+    }
+
+  }
+
+  validateCSV(line){
+    let parameters = line.split(',');
+    if(parameters[0] === 'parentCode' && parameters[1] === 'code' && parameters[2] === 'description' && parameters[3] === 'measurementType'){
+      return true;
+    }
+    else{
+      return false;
     }
   }
 
@@ -1006,6 +1096,27 @@ class PackageTable {
     return response;
   }
 
+  async getSettings(){
+    const requestUrl = '/api/forge/takeoff/info';
+    const requestData = {
+      'projectId': this.projectId,
+      'takeoffData': TakeoffDataType.SETTINGS,
+    };
+    let response = await apiClientAsync(requestUrl, requestData);
+    return response;
+  }
+
+  async patchSettings(measurementSystem){
+    const requestUrl = '/api/forge/takeoff/info';
+    const requestData = {
+      'projectId': this.projectId,
+      'takeoffData': TakeoffDataType.SETTINGS,
+      'measurementSystem': measurementSystem
+    };
+    let response = await apiClientAsync(requestUrl, requestData, 'patch');
+    return response;
+  }
+
   async createClassification(classifications, systemType, classificationName){
     const requestUrl = '/api/forge/takeoff/info';
     const requestData = {
@@ -1013,7 +1124,7 @@ class PackageTable {
       'takeoffData': ImportDataTypes.CLASSIFICATION_CREATE,
       'classificationName': classificationName,
       'systemType': systemType,
-      'classifications': classifications
+      'classifications': classifications,
     };
     let response = await apiClientAsync(requestUrl, requestData, 'post');
     return response;
@@ -1047,8 +1158,8 @@ class PackageTable {
   }
 
   // export data in takeoff table to CSV file
-  async exportCSV() {
-    let csvDataCleared = await cleanForCommas(this.csvData);
+  async exportCSV(csvData) {
+    let csvDataCleared = await cleanForCommas(csvData);
     let csvString = csvDataCleared.join("%0A");
     let a = document.createElement('a');
     a.href = 'data:attachment/csv,' + csvString;
@@ -1058,22 +1169,30 @@ class PackageTable {
     a.click();
   }
 
-  // protected: get the data cached to be exported to CSV later
-  prepareCSVData() {
-
+  prepareCSVData(table) {
     let exportOption = getImportExportOption();
     let csvRows = [];
-    let csvHeader = (exportOption === ExportImportOptions.EXPORTALLITEMS ? ['Package Name' ] : []);
+    let csvHeader = (exportOption === ExportOptions.ExportAllMainTable || exportOption === ExportOptions.ExportAllSecondaryTable ? ['Package Name' ] : []);
+    let dataSet = [];
+
+    switch(table){
+      case Tables.MainTable:
+        dataSet = this.dataSet;
+        break;
+      case Tables.SecondaryTable:
+        dataSet = this.rawItemsDataset;
+        break;
+    }
 
     // Set the header of CSV
-    for (var key in this.dataSet[0]) {
+    for (var key in dataSet[0]) {
       csvHeader.push(key);
     }
     csvRows.push(csvHeader);
 
     // Set the row data of CSV
-    this.dataSet.forEach((item) => {
-      let csvRowTmp = (exportOption === ExportImportOptions.EXPORTALLITEMS ? [this.packageName] : []);
+    dataSet.forEach((item) => {
+      let csvRowTmp = (exportOption === ExportOptions.ExportAllMainTable || exportOption === ExportOptions.ExportAllSecondaryTable ? [this.packageName] : []);
       for (key in item) {
         csvRowTmp.push( item[key] );
       }
@@ -1084,8 +1203,18 @@ class PackageTable {
 
   async refreshPackages(){
     await this.fetchDataAsync('packages');
+    let selectedId = $('input[name=listRadio]:checked', '#list')[0].id;
     $('#list').empty();
     this.drawTakeoffTable();
+    $(`#${selectedId}`).prop("checked", true);
+  }
+
+  async refreshSystems(){
+    // await this.fetchDataAsync('packages');
+    let selectedId = $('input[name=listRadio]:checked', '#list')[0].id;
+    $('#list').empty();
+    this.addSystemsToPage();
+    $(`#${selectedId}`).prop("checked", true);
   }
 
   async refreshTable() {
@@ -1117,7 +1246,7 @@ class PackageTable {
       this.dataset = Object.values(this.systems).find( o => o.name === classificationName).codes;
     }
 
-    this.csvData = this.prepareCSVData();
+    // this.csvData = this.prepareCSVData();
 
     let tableColumns = this.getColumns(this.dataSet);
 
@@ -1152,7 +1281,7 @@ async function downloadAllCSV(csvData) {
   a.click();
 }
 
-async function exportAllCSV(){
+async function exportAllCSV(table){
   let csvData = [];
   $('#executeCSV').hide();
   $('.importInProgress').show();
@@ -1170,7 +1299,8 @@ async function exportAllCSV(){
       await temporaryTable.fetchDataAsync(data);
     }
     await temporaryTable.polishDataOfCurrentDataTypeAsync();
-    csvData = (temporaryTable.csvData.length > 1? csvData.concat(temporaryTable.csvData) : csvData);
+    temporaryCSVData = temporaryTable.prepareCSVData(table);
+    csvData = (temporaryCSVData.length > 1? csvData.concat(temporaryCSVData) : csvData);
   }
   downloadAllCSV(csvData);
   $('#executeCSV').show();
@@ -1199,23 +1329,36 @@ $(document).ready(function () {
   $('#executeCSV').click(function () {
 
     exportImportOption = getImportExportOption();
+    let csvData = [];
     switch( exportImportOption ){
-      case ExportImportOptions.EXPORTCURRENTTABLE:{
-        if(checkForPackageData())
-          packageTable.exportCSV();
+      case ExportOptions.ExportCurrentMainTable:{
+        csvData = packageTable.prepareCSVData(Tables.MainTable);
+        if(checkForPackageData() && csvData[0].length > 0)
+          packageTable.exportCSV(csvData);
         break;
       };
-      case ExportImportOptions.EXPORTALLITEMS:{
-        if(checkForPackageData())
-          exportAllCSV(); 
+      case ExportOptions.ExportCurrentSecondaryTable:{
+        csvData = packageTable.prepareCSVData(Tables.SecondaryTable);
+        if(checkForPackageData() && csvData[0].length > 0)
+          packageTable.exportCSV(csvData);
         break;
       };
-      case ExportImportOptions.UPDATECLASSIFICATIONS:{
+      case ExportOptions.ExportAllMainTable:{
+        if(checkForPackageData())
+          exportAllCSV(Tables.MainTable); 
+        break;
+      };
+      case ExportOptions.ExportAllSecondaryTable:{
+        if(checkForPackageData())
+          exportAllCSV(Tables.SecondaryTable); 
+        break;
+      };
+      case ImportOptions.UpdateClassifications:{
         if(checkForPackageData())
           packageTable.importCSV(exportImportOption);
         break;
       }
-      case ExportImportOptions.CREATECLASSIFICATION:{
+      case ImportOptions.CreateClassification:{
         packageTable.importCSV(exportImportOption);
         break;
       }
@@ -1224,7 +1367,7 @@ $(document).ready(function () {
 
   $('#addPackage').click(async () => {
     const { value: packageName } = await Swal.fire({
-      title: 'Enter a name for the new Package',
+      title: 'Package Name',
       input: 'text',
       showCancelButton: true,
       inputValidator: (value) => {
@@ -1234,16 +1377,20 @@ $(document).ready(function () {
       }
     })
     if (packageName) {
-      responseBody = await packageTable.createPackage(packageName);
-      Swal.fire({
-        title: 'Status of the package creation',
-        text: JSON.stringify(responseBody.statusCode != 201 ? responseBody: responseBody.body),
-        showCancelButton: false,
-        confirmButtonColor: '#3085d6',
-        confirmButtonText: 'OK'
-      });
+      let responseBody = await packageTable.createPackage(packageName);
       if(responseBody.statusCode === 201)
         await packageTable.refreshPackages();
+      else{
+        Swal.fire({
+          icon: 'error',
+          title: 'An error ocurred!',
+          html: json2txt(responseBody),
+          showCancelButton: false,
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+      }
+      
     }
   });
 
@@ -1264,7 +1411,8 @@ $(document).ready(function () {
     const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
     switch( activeTab ){
       case '#items':{
-        $('#group_by').show();
+        // $('#group_by').show();
+        $('#packagesRow').show();
         //in case the tab is for package items, we check if we need to obtain packages, systems, views and locations
         //this is needed when we come from classifications tab, change the package or change the project
         if(!packageTable.packageName || $('#listTitle').html() == 'CLASSIFICATION SYSTEMS'){
@@ -1280,11 +1428,18 @@ $(document).ready(function () {
         $('#listTitle').html('PACKAGES');
         $('#addPackage').show();
         $('#secondaryTable').show();
-        $('#tablesTitle').html('INVENTORY');
+        $('#tablesTitle').html(`INVENTORY - ${packageTable.packageName || 'Choose a project'}`);
+        $('#mainTableTitle').html('Grouped Items');
+        $('#secondaryTableTitle').html('List of All Items');
+        $(`#${ExportLabelsId.ExportAllMainTable}`).html(PackagesExportLabels.ExportAllMainTable);
+        $(`#${ExportLabelsId.ExportAllSecondaryTable}`).html(PackagesExportLabels.ExportAllSecondaryTable);
+        $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(PackagesExportLabels.ExportCurrentMainTable);
+        $(`#${ExportLabelsId.ExportCurrentSecondaryTable}`).html(PackagesExportLabels.ExportCurrentSecondaryTable);
         break;
       }
       case '#classificationsystems':{
-        $('#group_by').hide();
+        // $('#group_by').hide();
+        $('#packagesRow').hide();
         if(!packageTable.packageName || $('#listTitle').html() == 'PACKAGES'){
           $('#list').empty();
           packageTable.CurrentDataType = TakeoffDataType.SYSTEMS;
@@ -1298,6 +1453,9 @@ $(document).ready(function () {
         $('#addPackage').hide();
         $('#secondaryTable').hide();
         $('#tablesTitle').html('CLASSIFICATIONS');
+        $('#mainTableTitle').html('');
+        $('#secondaryTableTitle').html('');
+        $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(ClassificationsExportLabels.ExportCurrentMainTable);
         break;
       }
     }
@@ -1315,12 +1473,20 @@ $(document).ready(function () {
 
     await packageTable.polishDataOfCurrentDataTypeAsync();
     packageTable.drawTakeoffTable();
+    manageImportExportOptions();
+    updateTitles();
 
     $('.clsInProgress').hide();
     $('.clsResult').show();
   })
 
 });
+
+function json2txt(jsonMessage){
+  let jsonString = JSON.stringify(jsonMessage);
+  
+  return jsonString.replaceAll(':{', '<br>').replace('{', '').replaceAll('}', '').replaceAll('"', '').replaceAll(',', '<br>');
+}
 
 //Function to return option selected (import or export)
 function getImportExportOption(){
@@ -1331,7 +1497,7 @@ function getImportExportOption(){
 function apiClientAsync( requestUrl, requestData=null, requestMethod='get' ) {
   let def = $.Deferred();
 
-  if( requestMethod == 'post' ){
+  if( requestMethod == 'post'|| requestMethod == 'patch' ){
     requestData = JSON.stringify(requestData);
   }
 

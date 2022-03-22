@@ -72,9 +72,9 @@ $(document).ready(function () {
     }
   });
 
-  $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+  $('a[data-toggle="tab"]').on('shown.bs.tab', async function (e) {
     $('#btnRefresh').click();
-    manageImportExportOptions();
+    // manageImportExportOptions();
   });
 
   $.getJSON("/api/forge/oauth/clientid", function (res) {
@@ -84,48 +84,101 @@ $(document).ready(function () {
       $('#sourceHubs').jstree(true).refresh();
     });
   });  
-
 });
+
+const ImportOptions = {
+  UpdateClassifications: 'updateclassifications',
+  CreateClassification: 'createclassification'
+}
+
+const ExportOptions = {
+  ExportCurrentMainTable: 'exportcurrentmaintable',
+  ExportCurrentSecondaryTable: 'exportcurrentsecondarytable',
+  ExportAllMainTable: 'exportallmaintable',
+  ExportAllSecondaryTable: 'exportallsecondarytable'
+}
+
+function updateTitles(){
+  const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
+    switch( activeTab ){
+      case '#items':{
+        $('#tablesTitle').html(`INVENTORY - ${$('input[name="listRadio"]:checked').val() || 'Choose a project'}`);
+        break;
+      }
+      case '#classificationsystems':{
+        $('#tablesTitle').html('CLASSIFICATIONS');
+        break;
+      }
+    }
+}
 
 //Here we manage available options based on selected data (ITEM or CLASSIFICATIONS)
 function manageImportExportOptions(){
   const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
-    switch(activeTab){
-      case '#items':
-        disableOptions('import');
-        break;
-      case '#classificationsystems':
-        disableOptions('export');
-        break;
-    }
+  let optionsToHide = [];
+  let optionsToShow = [];
+  switch(activeTab){
+    case '#items':
+      optionsToHide.push(...[ImportOptions.CreateClassification, ImportOptions.UpdateClassifications]);
+      optionsToShow.push(...[ExportOptions.ExportAllMainTable, ExportOptions.ExportAllSecondaryTable, ExportOptions.ExportCurrentSecondaryTable]);
+      break;
+    case '#classificationsystems':
+      optionsToHide.push(...[ExportOptions.ExportAllMainTable, ExportOptions.ExportAllSecondaryTable, ExportOptions.ExportCurrentSecondaryTable]);
+      optionsToShow.push(...[ImportOptions.CreateClassification, ImportOptions.UpdateClassifications]);
+      break;
+  }
+  hideNShowOptions(optionsToHide, optionsToShow);
 }
-
-const ExportImportOptions = {
-  EXPORTCURRENTTABLE: 'exportcurrent',
-  EXPORTALLITEMS: 'exportall',
-  UPDATECLASSIFICATIONS: 'updateclassifications',
-  CREATECLASSIFICATION: 'createclassification'
-} 
 
 const ImportExportRadioName = 'exportimport';
 
-//Here we disable and enable the options based on selected data (ITEM or CLASSIFICATIONS)
-function disableOptions(optionsToDisable){
-  switch(optionsToDisable){
-    case 'export':
-      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.EXPORTCURRENTTABLE}"]`).attr("disabled",false);
-      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.EXPORTALLITEMS}"]`).attr("disabled",true);
-      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.UPDATECLASSIFICATIONS}"]`).attr("disabled",false);
-      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.CREATECLASSIFICATION}"]`).attr("disabled",false);
-      break;
-    case 'import':
-      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.EXPORTCURRENTTABLE}"]`).attr("disabled",false);
-      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.EXPORTALLITEMS}"]`).attr("disabled",false);
-      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.UPDATECLASSIFICATIONS}"]`).attr("disabled",true);
-      $(`input[name="${ImportExportRadioName}"][value="${ExportImportOptions.CREATECLASSIFICATION}"]`).attr("disabled",true);
-      break;
+function hideNShowOptions(optionsToHide, optionsToShow){
+  for(const optionToHide of optionsToHide){
+    $(`input[name="${ImportExportRadioName}"][value="${optionToHide}"]`).parent().parent().hide();
   }
-  
+  for(const optionToShow of optionsToShow){
+    $(`input[name="${ImportExportRadioName}"][value="${optionToShow}"]`).parent().parent().show();
+  }
+  //Here we handle the case where we already have 2 classification systems, so creation isn't possible
+  if(Object.keys(packageTable.systems).length == 2)
+    $(`input[name="${ImportExportRadioName}"][value="${ImportOptions.CreateClassification}"]`).parent().parent().hide();
+
+  //Here we handle the case where there's no classification at all, so there's nothing to update
+  if(Object.keys(packageTable.systems).length == 0)
+    $(`input[name="${ImportExportRadioName}"][value="${ImportOptions.UpdateClassifications}"]`).parent().parent().hide();
+
+  $(`input[name="${ImportExportRadioName}"]:visible`).prop("checked", true);
+
+  $('#importlabel').show();
+  //Here we check if all import options are hidden
+  if(!anyImportVisible())
+    $('#importlabel').hide();
+
+  $('#exportlabel').show();
+  //Here we check if all export options are hidden
+  if(!anyExportVisible())
+    $('#exportlabel').hide();
+}
+
+function anyExportVisible(){
+  for(const exportOption of Object.keys(ExportOptions)){
+    if($(`input[name="${ImportExportRadioName}"][value="${ExportOptions[exportOption]}"]`).is(':visible'))
+      return true;
+  }
+  return false;
+}
+
+function anyImportVisible(){
+  for(const importOption of Object.keys(ImportOptions)){
+    if($(`input[name="${ImportExportRadioName}"][value="${ImportOptions[importOption]}"]`).is(':visible'))
+      return true;
+  }
+  return false;
+}
+
+async function handleListChange(){
+  if (packageTable.currentDataType === TakeoffDataType.SYSTEMS || packageTable.currentDataType === TakeoffDataType.CLASSIFICATIONS)
+      $('#btnRefresh').click();
 }
 
 function prepareUserHubsTree() {
@@ -165,7 +218,7 @@ function prepareUserHubsTree() {
       },
       "plugins": ["types", "state", "sort"],
       "state": { "key": "sourceHubs" }// key restore tree state
-  }).on('select_node.jstree', function(evt, data){
+  }).on('select_node.jstree', async function(evt, data){
     if (data != null && data.node != null && (data.node.type == 'accprojects' )) {
       $('#labelProjectHref').text(data.node.id);
       $('#labelProjectId').text(data.node.original.project_id);
@@ -180,7 +233,6 @@ function prepareUserHubsTree() {
       packageTable = new PackageTable('#mainTable', '#secondaryTable', data.node.original.project_id, data.node.id, TakeoffDataType.PACKAGES);
       $('#packages').empty();
       $('#btnRefresh').click();
-      manageImportExportOptions();
     }
     if (data != null && data.node != null && (data.node.type == 'bim360projects' )) {
       alert("Only ACC project is supported, please select ACC project!")
