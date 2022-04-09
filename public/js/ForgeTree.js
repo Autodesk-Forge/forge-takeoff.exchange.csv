@@ -72,6 +72,19 @@ $(document).ready(function () {
     }
   });
 
+  $('input[type=radio][name=measurementSystem]').change(async function(event) {
+    if(!!packageTable){
+      let patchSettingsResponse = await packageTable.patchSettings(event.target.value);
+      if(patchSettingsResponse.statusCode !== 200 ){
+        Swal.fire({
+          icon: 'error',
+          title: 'An error occurred',
+          text: 'Unable to change this Measurement System!'
+        })
+      }
+    }
+  });
+
   $('a[data-toggle="tab"]').on('shown.bs.tab', async function (e) {
     $('#btnRefresh').click();
     // manageImportExportOptions();
@@ -102,11 +115,11 @@ function updateTitles(){
   const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
     switch( activeTab ){
       case '#items':{
-        $('#tablesTitle').html(`INVENTORY - ${$('input[name="listRadio"]:checked').val() || 'Choose a project'}`);
+        $(`#${Titles.TablesTitle}`).html(`INVENTORY - ${$('input[name="listRadio"]:checked').val() || 'Choose a project'}`);
         break;
       }
       case '#classificationsystems':{
-        $('#tablesTitle').html('CLASSIFICATIONS');
+        $(`#${Titles.TablesTitle}`).html('CLASSIFICATIONS');
         break;
       }
     }
@@ -177,8 +190,9 @@ function anyImportVisible(){
 }
 
 async function handleListChange(){
-  if (packageTable.currentDataType === TakeoffDataType.SYSTEMS || packageTable.currentDataType === TakeoffDataType.CLASSIFICATIONS)
-      $('#btnRefresh').click();
+  $('#btnRefresh').click();
+  // if (packageTable.currentDataType === TakeoffDataType.SYSTEMS || packageTable.currentDataType === TakeoffDataType.CLASSIFICATIONS)
+  //     $('#btnRefresh').click();
 }
 
 function prepareUserHubsTree() {

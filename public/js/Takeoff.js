@@ -29,6 +29,23 @@ if (!String.prototype.replaceAll) {
 // the inventory table instance
 var packageTable = null;
 
+const CaseDependentRows = {
+  PackagesGroupBy: 'packagesGroupByRow',
+  MeasurementSystems: 'measurementSystemsRow'
+}
+
+const Titles = {
+  ListTitle: 'listTitle',
+  TablesTitle: 'tablesTitle',
+  MainTableTitle: 'mainTableTitle',
+  SecondaryTableTitle: 'secondaryTableTitle'
+}
+
+const TablesIds = {
+  MainTable: 'mainTable',
+  SecondaryTable: 'secondaryTable'
+}
+
 const ExportLabelsId = {
   ExportCurrentMainTable: 'exportcurrentmainlabel',
   ExportCurrentSecondaryTable: 'exportcurrentsecondarylabel',
@@ -47,6 +64,10 @@ const PackagesExportLabels = {
   ExportAllSecondaryTable: 'All Packages - All Items'
 }
 
+const MeasurementSystems = {
+  METRIC: 'METRIC',
+  IMPERIAL: 'IMPERIAL'
+}
 
 const Guid_Pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -68,11 +89,6 @@ const TakeoffDataType = {
 const Systems = {
   System1 : 'CLASSIFICATION_SYSTEM_1',
   System2 : 'CLASSIFICATION_SYSTEM_2'
-}
-
-const Tables = {
-  MainTable : 'mainTable',
-  SecondaryTable : 'secondaryTable'
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +113,7 @@ class PackageTable {
     this.isHumanReadable = false;
     this.csvData = [];
     this.packageName = '';
-    this.packagesDict = null;
+    this.packagesDict = {};
     this.cachedInfo = {
       DataInfo: []
     }
@@ -260,12 +276,13 @@ class PackageTable {
     for(const item of rawItems){
       //adjust raw items
       itemsObject.rawItemsPrimaryQ[item.id] = {
+        'ID': item.id,
         'Takeoff Name': item.type + ' TYPE',
         'Classification 1': item.primaryQuantity.classificationCodeOne,
         'Classification 2': item.primaryQuantity.classificationCodeTwo,
         'Document': item.contentView.id,
         'Location': item.locationId,
-        'ID': item.id,
+        // 'ID': item.id,
         'Type': item.type,
         'Output Name': item.primaryQuantity.outputName,
         'Quantity': item.primaryQuantity.quantity,
@@ -486,7 +503,7 @@ class PackageTable {
             'classification': '',
             // 'document': currentItem.contentView
           }
-          if(this.humanReadableData){
+          if(this.isHumanReadable){
             // here we override its values in case human readable is recquired
             newItem.quantity = newItem.quantity.toFixed(2);
           }
@@ -508,7 +525,7 @@ class PackageTable {
           'classification': `${codeObject.firstCode.code}`,
           // 'document': currenType.contentView
         }
-        if(this.humanReadableData){
+        if(this.isHumanReadable){
           // here we override its values in case human readable is recquired
           newItem.name = this.types[takeoffTypeId].name,
           newItem.quantity = newItem.quantity.toFixed(2);
@@ -527,22 +544,70 @@ class PackageTable {
 
     //Here we iterate through primary quantities of each item
     for(const itemId of Object.keys(this.items.rawItemsPrimaryQ)){
-      // here we replace the document id by it's name
-      this.items.rawItemsPrimaryQ[itemId].Document = this.views[this.items.rawItemsPrimaryQ[itemId].Document].name;
+      let newObject = {};
+      Object.assign(newObject, this.items.rawItemsPrimaryQ[itemId]);
       rawItemsArray.push(
-        this.items.rawItemsPrimaryQ[itemId]
+        newObject 
       )
+
+      if(this.isHumanReadable){
+        let lastElement = rawItemsArray[rawItemsArray.length - 1]
+        // here we replace the document id by it's name
+        lastElement.Document = await this.fromDocumentIdToDocumentName(lastElement.Document);
+        lastElement.Location = await this.fromLocationIdToLocationName(lastElement.Location);
+        lastElement.Quantity = await this.fromRawQuantityToFixed(lastElement.Quantity);
+        // lastElement.Location = 
+      }
     }
 
     //Here we iterate through secondary quantities of each item
     for(const itemId of Object.keys(this.items.rawItemsSecondaryQ)){
-      // here we replace the document id by it's name
-      this.items.rawItemsSecondaryQ[itemId].Document = this.views[this.items.rawItemsSecondaryQ[itemId].Document].name;
+      let newObject = {};
+      Object.assign(newObject, this.items.rawItemsSecondaryQ[itemId]);
       rawItemsArray.push(
-        this.items.rawItemsSecondaryQ[itemId]
+        newObject
       )
+      
+      if(this.isHumanReadable){
+        let lastElement = rawItemsArray[rawItemsArray.length - 1]
+        // here we replace the document id by it's name
+        lastElement.Document = await this.fromDocumentIdToDocumentName(lastElement.Document);
+        lastElement.Location = await this.fromLocationIdToLocationName(lastElement.Location);
+        lastElement.Quantity = await this.fromRawQuantityToFixed(lastElement.Quantity);
+      }
+      
     }
     this.rawItemsDataset = rawItemsArray;
+  }
+
+  async fromRawQuantityToFixed(rawQuantity){
+    try{
+      return rawQuantity.toFixed(2);
+     }
+     catch(error){
+       console.log(error);
+       return rawQuantity
+     }
+  }
+
+  async fromDocumentIdToDocumentName(documentId){
+    try{
+      return this.views[documentId].name;
+     }
+     catch(error){
+       console.log(error);
+       return documentId
+     }
+  }
+
+  async fromLocationIdToLocationName(locationId){
+    try{
+     return this.rawLocations.find(l => l.id === locationId).name;
+    }
+    catch(error){
+      console.log(error);
+      return 'Unassigned'
+    }
   }
 
   async adjustClassificationSystem2Data(){
@@ -576,7 +641,7 @@ class PackageTable {
             'classification': classification1.firstCode.code,
             // 'document': currentItem.contentView
           }
-          if(this.humanReadableData){
+          if(this.isHumanReadable){
             // here we override its values in case human readable is recquired
             newItem.name += ` - ${classification2.description}`;
             newItem.quantity = newItem.quantity.toFixed(2);
@@ -601,7 +666,7 @@ class PackageTable {
           'classification': byTakeoffClassification.firstCode.code,
           // 'document': currenType.contentView
         }
-        if(this.humanReadableData){
+        if(this.isHumanReadable){
           // here we override its values in case human readable is recquired
           newItem.name = this.types[takeoffTypeId].name,
           newItem.quantity = newItem.quantity.toFixed(2);
@@ -646,7 +711,7 @@ class PackageTable {
             'classification': lastClassification1.code,
             // 'document': currentItem.contentView
           }
-          if(this.humanReadableData){
+          if(this.isHumanReadable){
             // here we override its values in case human readable is recquired
             newItem.name += ` - ${classification1.description}`;
             newItem.quantity = newItem.quantity.toFixed(2);
@@ -669,7 +734,7 @@ class PackageTable {
           'unit': currenType.unitOfMeasure,
           'classification': lastClassification1.code,
         }
-        if(this.humanReadableData){
+        if(this.isHumanReadable){
           // here we override its values in case human readable is recquired
           newItem.name = this.types[takeoffTypeId].name,
           newItem.quantity = newItem.quantity.toFixed(2);
@@ -690,7 +755,7 @@ class PackageTable {
     for(const contentViewId of Object.keys(this.items.byContentView)){
       let currentItem = this.items.byContentView[contentViewId];
 
-      if(this.humanReadableData){
+      if(this.isHumanReadable){
         byDocumentArray.push({
           'name': this.views[contentViewId].name,
           'count': currentItem.count,
@@ -746,7 +811,7 @@ class PackageTable {
     for(const takeoffTypeId of Object.keys(this.items.byTakeoffTypeId)){
       
       let currentItem = this.items.byTakeoffTypeId[takeoffTypeId];
-      if (this.humanReadableData){
+      if (this.isHumanReadable){
         let codeObject = this.getProperClassification(currentItem.classificationCode);
         byTakeofftypeArray.push({
           'name': this.types[takeoffTypeId].name,
@@ -772,7 +837,7 @@ class PackageTable {
 
   // raw data or human readable data
   set IsHumanReadable(isHumanReadable = fasle) {
-    this.humanReadableData = isHumanReadable;
+    this.isHumanReadable = isHumanReadable;
   };
 
   // get current takeoff data type 
@@ -1072,7 +1137,47 @@ class PackageTable {
     else{
       return settingsResponse.statusCode === 200 && !!settingsResponse.body.measurementSystem ? true : false;
     }
+  }
 
+  async checkMeasurementSystem(){
+    let settingsResponse = await this.getSettings();
+
+    //First we select the proper option
+    if(settingsResponse.statusCode === 200 && !!settingsResponse.body.measurementSystem){
+      let selectedId = $('input[name=listRadio]:checked', '#list')[0].id;
+      $(`input[name=measurementSystem][value=${settingsResponse.body.measurementSystem}]`).prop("checked", true);
+    }
+    else if(settingsResponse.statusCode === 200 && !settingsResponse.body.measurementSystem){
+      for(const measurementSystem of Object.values(MeasurementSystems)){
+        $(`input[name=measurementSystem][value=${measurementSystem}]`).prop("checked", false);
+      }
+    }
+
+    this.enableMeasurementSystems();
+    //Now we disable if it's not possible to modify the measurement system
+    for(const packageId of Object.values(this.packagesDict)){
+      //check if there's any package type and if so, disable measurement systems
+      const requestUrl = '/api/forge/takeoff/info';
+      const requestData = {
+        'projectId': this.projectId,
+        'takeoffData': 'types',
+        'packageId': packageId
+      };
+      let rawTypes = await apiClientAsync(requestUrl, requestData);
+      if(rawTypes.length > 0){
+        this.disableMeasurementSystems();
+        break;
+      }
+      // this.enableMeasurementSystems();
+    }
+  }
+  
+  enableMeasurementSystems(){
+    $(`input[name=measurementSystem]`).prop("disabled", false);
+  }
+
+  disableMeasurementSystems(){
+    $(`input[name=measurementSystem]`).prop("disabled", true);
   }
 
   validateCSV(line){
@@ -1176,10 +1281,10 @@ class PackageTable {
     let dataSet = [];
 
     switch(table){
-      case Tables.MainTable:
+      case TablesIds.MainTable:
         dataSet = this.dataSet;
         break;
-      case Tables.SecondaryTable:
+      case TablesIds.SecondaryTable:
         dataSet = this.rawItemsDataset;
         break;
     }
@@ -1219,9 +1324,9 @@ class PackageTable {
 
   async refreshTable() {
 
-    this.IsHumanReadable = isHumanReadable();
+    this.isHumanReadable = isHumanReadable();
 
-    if(!packageTable.packageName || $('#listTitle').html() == 'PACKAGES'){
+    if(!packageTable.packageName || $(`#${Titles.ListTitle}`).html() == 'PACKAGES'){
       let orderBy = $('#group_by').find(":selected").val();
       switch (orderBy) {
         case 'primaryclassification':
@@ -1240,6 +1345,8 @@ class PackageTable {
           await this.adjustLocationData();
           break;
       }
+      
+      await this.adjustRawItemsData();
     }
     else{
       let classificationName = $('input[name="listRadio"]:checked').val();
@@ -1248,12 +1355,20 @@ class PackageTable {
 
     // this.csvData = this.prepareCSVData();
 
-    let tableColumns = this.getColumns(this.dataSet);
+    let mainTableColumns = this.getColumns(this.dataSet);
 
     $(this.tableId).bootstrapTable('refreshOptions', {
         data: this.dataSet,
-        columns: tableColumns
+        columns: mainTableColumns
     });
+
+    let secondaryTableColumns = this.getColumns(this.rawItemsDataset);
+
+    $(this.rawTableId).bootstrapTable('refreshOptions', {
+        data: this.rawItemsDataset,
+        columns: secondaryTableColumns
+    });
+    
   }
 
 }
@@ -1293,13 +1408,15 @@ async function exportAllCSV(table){
     temporaryTable.packagesDict = packageTable.packagesDict;
     temporaryTable.packageName = packageData.name;
     temporaryTable.updatePackageId();
-    temporaryTable.IsHumanReadable = isHumanReadable();
+    temporaryTable.humanReadableData = isHumanReadable();
     dataFetchs = ['items','types'];
     for(const data of dataFetchs){
       await temporaryTable.fetchDataAsync(data);
     }
     await temporaryTable.polishDataOfCurrentDataTypeAsync();
     temporaryCSVData = temporaryTable.prepareCSVData(table);
+    if(csvData.length > 0)
+      temporaryCSVData.shift();
     csvData = (temporaryCSVData.length > 1? csvData.concat(temporaryCSVData) : csvData);
   }
   downloadAllCSV(csvData);
@@ -1309,8 +1426,8 @@ async function exportAllCSV(table){
 
 function isHumanReadable(){
   //we're returning always true as we already have the raw table
-  return true;
-  // return $('input[name="dataTypeToDisplay"]:checked').val() === 'humanReadable'
+  // return true;
+  return $('input[name="dataTypeToDisplay"]:checked').val() === 'humanReadable'
 }
 
 //Here we check if the proper data was acquired for being exported
@@ -1390,7 +1507,6 @@ $(document).ready(function () {
           confirmButtonText: 'OK'
         });
       }
-      
     }
   });
 
@@ -1411,11 +1527,11 @@ $(document).ready(function () {
     const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
     switch( activeTab ){
       case '#items':{
-        // $('#group_by').show();
-        $('#packagesRow').show();
+        $(`#${CaseDependentRows.PackagesGroupBy}`).show();
+        $(`#${CaseDependentRows.MeasurementSystems}`).hide();
         //in case the tab is for package items, we check if we need to obtain packages, systems, views and locations
         //this is needed when we come from classifications tab, change the package or change the project
-        if(!packageTable.packageName || $('#listTitle').html() == 'CLASSIFICATION SYSTEMS'){
+        if(!packageTable.packageName || $(`#${Titles.ListTitle}`).html() == 'CLASSIFICATION SYSTEMS'){
           $('#list').empty();
           packageTable.CurrentDataType = TakeoffDataType.PACKAGES;
           dataFetchs = ['packages','systems', 'views', 'locations'];
@@ -1425,12 +1541,13 @@ $(document).ready(function () {
           packageTable.CurrentDataType = TakeoffDataType.ITEMS;
           dataFetchs = ['types', 'items'];
         }
-        $('#listTitle').html('PACKAGES');
+        $(`#${Titles.ListTitle}`).html('PACKAGES');
         $('#addPackage').show();
-        $('#secondaryTable').show();
-        $('#tablesTitle').html(`INVENTORY - ${packageTable.packageName || 'Choose a project'}`);
-        $('#mainTableTitle').html('Grouped Items');
-        $('#secondaryTableTitle').html('List of All Items');
+        $(`#${TablesIds.MainTable}`).show();
+        $(`#${TablesIds.SecondaryTable}`).show();
+        $(`#${Titles.TablesTitle}`).html(`INVENTORY - ${packageTable.packageName || 'Choose a project'}`);
+        $(`#${Titles.MainTableTitle}`).html('Grouped Items');
+        $(`#${Titles.SecondaryTableTitle}`).html('List of All Items');
         $(`#${ExportLabelsId.ExportAllMainTable}`).html(PackagesExportLabels.ExportAllMainTable);
         $(`#${ExportLabelsId.ExportAllSecondaryTable}`).html(PackagesExportLabels.ExportAllSecondaryTable);
         $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(PackagesExportLabels.ExportCurrentMainTable);
@@ -1438,9 +1555,9 @@ $(document).ready(function () {
         break;
       }
       case '#classificationsystems':{
-        // $('#group_by').hide();
-        $('#packagesRow').hide();
-        if(!packageTable.packageName || $('#listTitle').html() == 'PACKAGES'){
+        $(`#${CaseDependentRows.PackagesGroupBy}`).hide();
+        $(`#${CaseDependentRows.MeasurementSystems}`).show();
+        if(!packageTable.packageName || $(`#${Titles.ListTitle}`).html() == 'PACKAGES'){
           $('#list').empty();
           packageTable.CurrentDataType = TakeoffDataType.SYSTEMS;
           // dataFetchs = ['systems', 'views'];
@@ -1448,13 +1565,13 @@ $(document).ready(function () {
         else{
           packageTable.CurrentDataType = TakeoffDataType.CLASSIFICATIONS;
         }
-        dataFetchs = ['systems', 'views'];
-        $('#listTitle').html('CLASSIFICATION SYSTEMS');
+        dataFetchs = ['packages', 'systems', 'views'];
+        $(`#${Titles.ListTitle}`).html('CLASSIFICATION SYSTEMS');
         $('#addPackage').hide();
-        $('#secondaryTable').hide();
-        $('#tablesTitle').html('CLASSIFICATIONS');
-        $('#mainTableTitle').html('');
-        $('#secondaryTableTitle').html('');
+        $(`#${TablesIds.SecondaryTable}`).hide();
+        $(`#${Titles.TablesTitle}`).html('CLASSIFICATIONS');
+        $(`#${Titles.MainTableTitle}`).html('');
+        $(`#${Titles.SecondaryTableTitle}`).html('');
         $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(ClassificationsExportLabels.ExportCurrentMainTable);
         break;
       }
@@ -1473,7 +1590,11 @@ $(document).ready(function () {
 
     await packageTable.polishDataOfCurrentDataTypeAsync();
     packageTable.drawTakeoffTable();
+    packageTable.checkMeasurementSystem();
+
+    // if(activeTab === '#classificationsystems')
     manageImportExportOptions();
+      
     updateTitles();
 
     $('.clsInProgress').hide();
@@ -1484,7 +1605,6 @@ $(document).ready(function () {
 
 function json2txt(jsonMessage){
   let jsonString = JSON.stringify(jsonMessage);
-  
   return jsonString.replaceAll(':{', '<br>').replace('{', '').replaceAll('}', '').replaceAll('"', '').replaceAll(',', '<br>');
 }
 
@@ -1517,4 +1637,3 @@ function apiClientAsync( requestUrl, requestData=null, requestMethod='get' ) {
   });
   return def.promise();
 }
-
