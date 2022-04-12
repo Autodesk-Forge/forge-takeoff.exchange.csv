@@ -216,12 +216,12 @@
                       <span class="input-group-addon">
                         <input type="radio" name='dataTypeToDisplay' value='humanReadable'>
                       </span>
-                      <label class="form-control">Human readable form</label>
+                      <label class="form-control">Readable data</label>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="btn-group btn-lg">
+              <div class="btn-group btn-lg" style="display:none;">
                 <div style="padding-top: 10px;">
                   <button class="btn btn-primary" id="btnRefresh">
                     <span class="glyphicon glyphicon-refresh"></span>Load/Refresh
@@ -233,34 +233,37 @@
               <div class="row">
                 <div style="padding-top: 10px; text-align: left;">
                   <div class="col-lg-12">
-                    <div style="text-align: left;" id="exportlabel">
-                      <label>Export to csv:</label>
+                    <div style="text-align: left;" id="exporttablelabel">
+                      <label>Table:</label>
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='exportimport' value='exportcurrentmaintable' checked>
+                        <input type="radio" name='exporttable' value='exportmaintable' checked>
                       </span>
-                      <label class="form-control" id='exportcurrentmainlabel'>Current Package - Grouped</label>
+                      <label class="form-control" id='exportmainlabel'>Grouped Items</label>
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='exportimport' value='exportcurrentsecondarytable' checked>
+                        <input type="radio" name='exporttable' value='exportsecondarytable' checked>
                       </span>
-                      <label class="form-control" id='exportcurrentsecondarylabel' >Current Package - All Items</label>
+                      <label class="form-control" id='exportsecondarylabel'>List of All Items</label>
+                    </div>
+                    <div style="text-align: left;" id="exportpackagelabel">
+                      <label>Packages:</label>
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='exportimport' value='exportallmaintable' checked>
+                        <input type="radio" name='exportpackage' value='exportcurrentpackage' checked>
                       </span>
-                      <label class="form-control" id='exportallmainlabel'>All Packages - Grouped</label>
+                      <label class="form-control" id='exportcurrentlabel'>Current Package</label>
                     </div>
                     <div class="input-group">
                       <span class="input-group-addon">
-                        <input type="radio" name='exportimport' value='exportallsecondarytable' checked>
+                        <input type="radio" name='exportpackage' value='exportallpackages' checked>
                       </span>
-                      <label class="form-control" id='exportallsecondaryabel'>All Packages - All Items</label>
+                      <label class="form-control" id='exportalllabel'>All Packages</label>
                     </div>
-                    <div style="text-align: left;" id="importlabel">
+                    <!-- <div style="text-align: left;" id="importlabel">
                       <label>Import from csv:</label>
                     </div>
                     <div class="input-group">
@@ -274,7 +277,7 @@
                         <input type="radio" name='exportimport' value='createclassification' checked>
                       </span>
                       <label class="form-control">Create Classification System</label>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
               </div>
@@ -285,8 +288,17 @@
                       <img src="res/Bars-1s-200px.svg" class="InProgressImg">
                     </div>
                   </div>
-                  <button class="btn btn-primary" id="executeCSV">
-                    <span class="glyphicon glyphicon-play"></span>Execute
+                  <button class="btn btn-primary" id="exportCSV" style="margin-bottom: 1em;">
+                    <span class="glyphicon glyphicon-play"></span>Export
+                  </button>
+                  <button class="btn btn-primary" id="exportClassification" style="margin-bottom: 1em;">
+                    <span class="glyphicon glyphicon-play"></span>Export Classification
+                  </button>
+                  <button class="btn btn-primary" id="updateclassifications" style="margin-bottom: 1em;">
+                    <span class="glyphicon glyphicon-play"></span>Update Classification
+                  </button>
+                  <button class="btn btn-primary" id="createclassification" style="margin-bottom: 1em;">
+                    <span class="glyphicon glyphicon-play"></span>Create Classification
                   </button>
                 </div>
               </div>

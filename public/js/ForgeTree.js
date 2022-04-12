@@ -85,9 +85,11 @@ $(document).ready(function () {
     }
   });
 
-  $('a[data-toggle="tab"]').on('shown.bs.tab', async function (e) {
-    $('#btnRefresh').click();
+  $('a[data-toggle="tab"]').on('shown.bs.tab', async function (event) {
+    // $('#btnRefresh').click();
     // manageImportExportOptions();
+    // await toggleTab(event.target.href.split('#')[1]);
+    await toggleTab(event.target.hash);
   });
 
   $.getJSON("/api/forge/oauth/clientid", function (res) {
@@ -99,17 +101,118 @@ $(document).ready(function () {
   });  
 });
 
+async function toggleTab(selectedTab){
+  const projectHref = $('#labelProjectHref').text();
+  const projectId = $('#labelProjectId').text();
+  if (projectHref === '' || projectId === '') {
+    alert('please select one project!');
+    return;
+  }
+
+  $('#list').empty();
+
+  let dataFetchs;
+  packageTable.IsHumanReadable = isHumanReadable();
+  //Here we grab the package/classification name
+  packageTable.packageName = selectedTab;
+  switch(selectedTab){
+    case '#items':{
+      $(`#${CaseDependentRows.PackagesGroupBy}`).show();
+      $(`#${CaseDependentRows.MeasurementSystems}`).hide();
+
+      dataFetchs = ['packages','systems', 'views', 'locations'];
+      packageTable.CurrentDataType = TakeoffDataType.PACKAGES;
+      
+      $(`#${Titles.ListTitle}`).html('PACKAGES');
+      $('#addPackage').show();
+      $(`#${TablesIds.MainTable}`).show();
+      $(`#${TablesIds.SecondaryTable}`).show();
+      $(`#${Titles.TablesTitle}`).html(`INVENTORY - ${packageTable.packageName || 'Choose a project'}`);
+      $(`#${Titles.MainTableTitle}`).html('Grouped Items');
+      $(`#${Titles.SecondaryTableTitle}`).html('List of All Items');
+      // $(`#${ExportLabelsId.ExportAllMainTable}`).html(PackagesExportLabels.ExportAllMainTable);
+      // $(`#${ExportLabelsId.ExportAllSecondaryTable}`).html(PackagesExportLabels.ExportAllSecondaryTable);
+      // $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(PackagesExportLabels.ExportCurrentMainTable);
+      // $(`#${ExportLabelsId.ExportCurrentSecondaryTable}`).html(PackagesExportLabels.ExportCurrentSecondaryTable);
+        break;
+    }
+    case '#classificationsystems':{
+      $(`#${CaseDependentRows.PackagesGroupBy}`).hide();
+      $(`#${CaseDependentRows.MeasurementSystems}`).show();
+      packageTable.CurrentDataType = TakeoffDataType.SYSTEMS;
+      
+      dataFetchs = ['packages', 'systems', 'views'];
+      $(`#${Titles.ListTitle}`).html('CLASSIFICATION SYSTEMS');
+      $('#addPackage').hide();
+      $(`#${TablesIds.SecondaryTable}`).hide();
+      $(`#${Titles.TablesTitle}`).html('CLASSIFICATIONS');
+      $(`#${Titles.MainTableTitle}`).html('');
+      $(`#${Titles.SecondaryTableTitle}`).html('');
+      // $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(ClassificationsExportLabels.ExportCurrentMainTable);
+      break;
+    }
+  }
+
+  $('.clsInProgress').show();
+  $('.clsResult').hide();
+
+  try{
+    for(const data of dataFetchs){
+      await packageTable.fetchDataAsync(data);
+    }
+  }catch(err){
+    console.log(err);
+  }
+
+  await packageTable.polishDataOfCurrentDataTypeAsync();
+  packageTable.drawTakeoffTable();
+  // packageTable.checkMeasurementSystem();
+
+  await handleListChange();
+
+  manageImportExportOptions();
+    
+  updateTitles();
+
+  $('.clsInProgress').hide();
+  $('.clsResult').show();
+}
+
 const ImportOptions = {
   UpdateClassifications: 'updateclassifications',
   CreateClassification: 'createclassification'
 }
 
-const ExportOptions = {
-  ExportCurrentMainTable: 'exportcurrentmaintable',
-  ExportCurrentSecondaryTable: 'exportcurrentsecondarytable',
-  ExportAllMainTable: 'exportallmaintable',
-  ExportAllSecondaryTable: 'exportallsecondarytable'
+const ExportRadioNames = {
+  ExportTable: 'exporttable',
+  ExportPackage: 'exportpackage'
 }
+
+const ExportRadioValues = {
+  CurrentPackage: 'exportcurrentpackage',
+  AllPackages: 'exportallpackages',
+  MainTable: 'exportmaintable',
+  SecondaryTable: 'exportsecondarytable'
+}
+
+const ExportButtons = {
+  ExportPackage: 'exportCSV',
+  ExportClassification: 'exportClassification'
+}
+
+const ExportOptions = {
+  ExportCurrentMainTable: 'exportcurrentpackage-exportmaintable',
+  ExportCurrentSecondaryTable: 'exportcurrentpackage-exportsecondarytable',
+  ExportAllMainTable: 'exportallpackages-exportmaintable',
+  ExportAllSecondaryTable: 'exportallpackages-exportsecondarytable'
+}
+
+// const ExportOptions = {
+//   ExportCurrentMainTable: 'exportcurrentmaintable',
+//   ExportCurrentSecondaryTable: 'exportcurrentsecondarytable',
+//   ExportAllMainTable: 'exportallmaintable',
+//   ExportAllSecondaryTable: 'exportallsecondarytable'
+// }
 
 function updateTitles(){
   const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
@@ -130,50 +233,121 @@ function manageImportExportOptions(){
   const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
   let optionsToHide = [];
   let optionsToShow = [];
+  let buttonsToHide = [];
+  let buttonsToShow = [];
   switch(activeTab){
     case '#items':
-      optionsToHide.push(...[ImportOptions.CreateClassification, ImportOptions.UpdateClassifications]);
-      optionsToShow.push(...[ExportOptions.ExportAllMainTable, ExportOptions.ExportAllSecondaryTable, ExportOptions.ExportCurrentSecondaryTable]);
+      $('#exporttablelabel').show();
+      $('#exportpackagelabel').show();
+      $('input[name="dataTypeToDisplay"]').parent().parent().parent().show();
+      optionsToHide.push(...[]);
+      optionsToShow.push(...[
+        {
+          optionName: ExportRadioNames.ExportPackage, 
+          optionValue: ExportRadioValues.AllPackages
+        },
+        {
+          optionName: ExportRadioNames.ExportPackage, 
+          optionValue: ExportRadioValues.CurrentPackage
+        }, 
+        {
+          optionName: ExportRadioNames.ExportTable, 
+          optionValue: ExportRadioValues.MainTable
+        }, 
+        {
+          optionName: ExportRadioNames.ExportTable, 
+          optionValue: ExportRadioValues.SecondaryTable
+        }
+      ]);
+      buttonsToHide.push(...[
+        ImportOptions.CreateClassification, 
+        ImportOptions.UpdateClassifications,
+        ExportButtons.ExportClassification
+      ]);
+      buttonsToShow.push(...[
+        ExportButtons.ExportPackage
+      ]);
       break;
     case '#classificationsystems':
-      optionsToHide.push(...[ExportOptions.ExportAllMainTable, ExportOptions.ExportAllSecondaryTable, ExportOptions.ExportCurrentSecondaryTable]);
-      optionsToShow.push(...[ImportOptions.CreateClassification, ImportOptions.UpdateClassifications]);
+      $('#exporttablelabel').hide();
+      $('#exportpackagelabel').hide();
+      $('input[name="dataTypeToDisplay"]').parent().parent().parent().hide();
+      optionsToHide.push(...[
+        {
+          optionName: ExportRadioNames.ExportPackage, 
+          optionValue: ExportRadioValues.AllPackages
+        },
+        {
+          optionName: ExportRadioNames.ExportPackage, 
+          optionValue: ExportRadioValues.CurrentPackage
+        }, 
+        {
+          optionName: ExportRadioNames.ExportTable, 
+          optionValue: ExportRadioValues.MainTable
+        }, 
+        {
+          optionName: ExportRadioNames.ExportTable, 
+          optionValue: ExportRadioValues.SecondaryTable
+        }
+      ]);
+      optionsToShow.push(...[]);
+      buttonsToHide.push(...[
+        ExportButtons.ExportPackage
+      ]);
+      buttonsToShow.push(...[
+        ImportOptions.CreateClassification, 
+        ImportOptions.UpdateClassifications,
+        ExportButtons.ExportClassification
+      ]);
       break;
   }
-  hideNShowOptions(optionsToHide, optionsToShow);
+  hideNShowOptions(optionsToHide, optionsToShow, buttonsToHide, buttonsToShow);
 }
 
 const ImportExportRadioName = 'exportimport';
 
-function hideNShowOptions(optionsToHide, optionsToShow){
+function hideNShowOptions(optionsToHide, optionsToShow, buttonsToHide, buttonsToShow){
   for(const optionToHide of optionsToHide){
-    $(`input[name="${ImportExportRadioName}"][value="${optionToHide}"]`).parent().parent().hide();
+    $(`input[name="${optionToHide.optionName}"][value="${optionToHide.optionValue}"]`).parent().parent().hide();
   }
   for(const optionToShow of optionsToShow){
-    $(`input[name="${ImportExportRadioName}"][value="${optionToShow}"]`).parent().parent().show();
+    $(`input[name="${optionToShow.optionName}"][value="${optionToShow.optionValue}"]`).parent().parent().show();
+  }
+  for(const buttonToHide of buttonsToHide){
+    $(`#${buttonToHide}`).hide();
+  }
+  for(const buttonToShow of buttonsToShow){
+    $(`#${buttonToShow}`).show();
   }
   //Here we handle the case where we already have 2 classification systems, so creation isn't possible
   if(Object.keys(packageTable.systems).length == 2)
-    $(`input[name="${ImportExportRadioName}"][value="${ImportOptions.CreateClassification}"]`).parent().parent().hide();
+    $(`#${ImportOptions.CreateClassification}`).hide();
 
   //Here we handle the case where there's no classification at all, so there's nothing to update
-  if(Object.keys(packageTable.systems).length == 0)
-    $(`input[name="${ImportExportRadioName}"][value="${ImportOptions.UpdateClassifications}"]`).parent().parent().hide();
+  if(Object.keys(packageTable.systems).length == 0 || !packageTable.canUpdateClassifications)
+    $(`#${ImportOptions.UpdateClassifications}`).hide();
 
-  $(`input[name="${ImportExportRadioName}"]:visible`).prop("checked", true);
 
-  $('#importlabel').show();
+  $(`input[name="${ExportRadioNames.ExportPackage}"]:visible`).prop("checked", true);
+  $(`input[name="${ExportRadioNames.ExportTable}"]:visible`).prop("checked", true);
+
   //Here we check if all import options are hidden
-  if(!anyImportVisible())
-    $('#importlabel').hide();
-
-  $('#exportlabel').show();
-  //Here we check if all export options are hidden
-  if(!anyExportVisible())
-    $('#exportlabel').hide();
+  // if(!anyImportVisible())
+  //   $('#importlabel').hide();
+ 
+  // $('#exporttablelabel').show();
+  // $('#exportpackagelabel').show();
+  // //Here we check if all export options are hidden
+  // if(!anyExportVisible())
+  //   $('#exporttablelabel').hide();
+  //   $('#exportpackagelabel').hide();
 }
 
 function anyExportVisible(){
+  for(const exportOption of Object.keys(ExportOptions)){
+    if($(`input[name="${ImportExportRadioName}"][value="${ExportOptions[exportOption]}"]`).is(':visible'))
+      return true;
+  }
   for(const exportOption of Object.keys(ExportOptions)){
     if($(`input[name="${ImportExportRadioName}"][value="${ExportOptions[exportOption]}"]`).is(':visible'))
       return true;
@@ -190,9 +364,85 @@ function anyImportVisible(){
 }
 
 async function handleListChange(){
-  $('#btnRefresh').click();
-  // if (packageTable.currentDataType === TakeoffDataType.SYSTEMS || packageTable.currentDataType === TakeoffDataType.CLASSIFICATIONS)
-  //     $('#btnRefresh').click();
+  // $('#btnRefresh').click();
+
+  const projectHref = $('#labelProjectHref').text();
+  const projectId = $('#labelProjectId').text();
+  if (projectHref === '' || projectId === '') {
+    alert('please select one project!');
+    return;
+  }
+
+  let dataFetchs;
+  packageTable.IsHumanReadable = isHumanReadable();
+  //Here we grab the package/classification name
+  packageTable.packageName = $('input[name="listRadio"]:checked').val();
+
+  // here we get the active tab
+  const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
+  switch( activeTab ){
+    case '#items':{
+      $(`#${CaseDependentRows.PackagesGroupBy}`).show();
+      $(`#${CaseDependentRows.MeasurementSystems}`).hide();
+      
+      packageTable.updatePackageId();
+      packageTable.CurrentDataType = TakeoffDataType.ITEMS;
+      dataFetchs = ['types', 'items'];
+
+      $(`#${Titles.ListTitle}`).html('PACKAGES');
+      $('#addPackage').show();
+      $(`#${TablesIds.MainTable}`).show();
+      $(`#${TablesIds.SecondaryTable}`).show();
+      $(`#${Titles.TablesTitle}`).html(`INVENTORY - ${packageTable.packageName || 'Choose a project'}`);
+      $(`#${Titles.MainTableTitle}`).html('Grouped Items');
+      $(`#${Titles.SecondaryTableTitle}`).html('List of All Items');
+      // $(`#${ExportLabelsId.ExportAllMainTable}`).html(PackagesExportLabels.ExportAllMainTable);
+      // $(`#${ExportLabelsId.ExportAllSecondaryTable}`).html(PackagesExportLabels.ExportAllSecondaryTable);
+      // $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(PackagesExportLabels.ExportCurrentMainTable);
+      // $(`#${ExportLabelsId.ExportCurrentSecondaryTable}`).html(PackagesExportLabels.ExportCurrentSecondaryTable);
+      break;
+    }
+    case '#classificationsystems':{
+      $(`#${CaseDependentRows.PackagesGroupBy}`).hide();
+      $(`#${CaseDependentRows.MeasurementSystems}`).show();
+      
+      packageTable.CurrentDataType = TakeoffDataType.CLASSIFICATIONS;
+
+      dataFetchs = ['packages', 'systems', 'views'];
+      $(`#${Titles.ListTitle}`).html('CLASSIFICATION SYSTEMS');
+      $('#addPackage').hide();
+      $(`#${TablesIds.SecondaryTable}`).hide();
+      $(`#${Titles.TablesTitle}`).html('CLASSIFICATIONS');
+      $(`#${Titles.MainTableTitle}`).html('');
+      $(`#${Titles.SecondaryTableTitle}`).html('');
+      // $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(ClassificationsExportLabels.ExportCurrentMainTable);
+      break;
+    }
+  }
+
+  $('.clsInProgress').show();
+  $('.clsResult').hide();
+
+  try{
+    for(const data of dataFetchs){
+      await packageTable.fetchDataAsync(data);
+    }
+  }catch(err){
+    console.log(err);
+  }
+
+  await packageTable.polishDataOfCurrentDataTypeAsync();
+  packageTable.drawTakeoffTable();
+  // packageTable.checkMeasurementSystem();
+
+  // if(activeTab === '#classificationsystems')
+  manageImportExportOptions();
+    
+  updateTitles();
+
+  $('.clsInProgress').hide();
+  $('.clsResult').show();
+
 }
 
 function prepareUserHubsTree() {
@@ -241,12 +491,15 @@ function prepareUserHubsTree() {
         delete packageTable;
         packageTable = null;
       }
-
-      $('#list').empty();
+      // $('#list').empty();
 
       packageTable = new PackageTable('#mainTable', '#secondaryTable', data.node.original.project_id, data.node.id, TakeoffDataType.PACKAGES);
-      $('#packages').empty();
-      $('#btnRefresh').click();
+      // $('#btnRefresh').click();
+
+      let selectedTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
+      await toggleTab(selectedTab);
+      await packageTable.checkMeasurementSystem();
+      await packageTable.checkClassificationsUpdate();
     }
     if (data != null && data.node != null && (data.node.type == 'bim360projects' )) {
       alert("Only ACC project is supported, please select ACC project!")

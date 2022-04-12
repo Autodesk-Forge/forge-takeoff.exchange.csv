@@ -46,13 +46,6 @@ const TablesIds = {
   SecondaryTable: 'secondaryTable'
 }
 
-const ExportLabelsId = {
-  ExportCurrentMainTable: 'exportcurrentmainlabel',
-  ExportCurrentSecondaryTable: 'exportcurrentsecondarylabel',
-  ExportAllMainTable: 'exportallmainlabel',
-  ExportAllSecondaryTable: 'exportallsecondaryabel'
-}
-
 const ClassificationsExportLabels = {
   ExportCurrentMainTable: 'Current Classifications'
 }
@@ -102,6 +95,7 @@ class PackageTable {
     this.dataSet = dataSet;
     this.rawItemsDataset = [];
     this.systems = {};
+    this.canUpdateClassifications = true;
     this.items = {};
     this.types = {};
     this.views = {};
@@ -255,7 +249,8 @@ class PackageTable {
       typesObject[type.id] = {
         'name': type.name,
         'primaryQuantityDefinition': {
-          'classificationCodeOne': type.primaryQuantityDefinition.classificationCode,
+          'classificationCodeOne': type.primaryQuantityDefinition.classificationCodeOne,
+          'classificationCodeTwo': type.primaryQuantityDefinition.classificationCodeTwo,
           'unitOfMeasure': type.primaryQuantityDefinition.unitOfMeasure
         }
       }
@@ -292,12 +287,13 @@ class PackageTable {
       //now we remove those unassigned by 2 classifications
       if(!!secondaryQuantities){
         itemsObject.rawItemsSecondaryQ[item.id] = {
+          'ID': item.id,
           'Takeoff Name': item.type + ' TYPE',
           'Classification 1': secondaryQuantities ? secondaryQuantities.classificationCodeOne : 'Unassigned',
           'Classification 2': secondaryQuantities ? secondaryQuantities.classificationCodeTwo : 'Unassigned',
           'Document': item.contentView.id,
           'Location': item.locationId,
-          'ID': item.id,
+          // 'ID': item.id,
           'Type': item.type,
           'Output Name': secondaryQuantities ? secondaryQuantities.outputName : 'Unassigned',
           'Quantity': secondaryQuantities ? secondaryQuantities.quantity : 'Unassigned',
@@ -465,7 +461,7 @@ class PackageTable {
       }
       catch(err){
         console.log(err);
-        this.dataSet = {};
+        this.dataSet = [];
       }
       
       // this.csvData = this.prepareCSVData();
@@ -1080,7 +1076,7 @@ class PackageTable {
           }
           Swal.fire({
             icon: responseBody.statusCode != 200 && responseBody.statusCode != 201 ? 'error': 'success',
-            title: 'Status',
+            title: responseBody.statusCode != 200 && responseBody.statusCode != 201 ? 'Error': 'Success',
             html: JSON.stringify(responseBody.statusCode != 200 && responseBody.statusCode != 201 ? json2txt(responseBody) : json2txt(responseBody.body)),
             showCancelButton: false,
             confirmButtonColor: '#3085d6',
@@ -1170,6 +1166,39 @@ class PackageTable {
       }
       // this.enableMeasurementSystems();
     }
+  }
+
+  async checkClassificationsUpdate(){
+    this.showClassificationsUpdate();
+    const requestUrl = '/api/forge/takeoff/info';
+    const requestData = {
+      'projectId': this.projectId,
+      'takeoffData': 'types',
+      'packageId': ''
+    };
+    let ishidden = false;
+    this.packages.forEach( async (currentPackage) => {
+      if(!ishidden){
+        requestData.packageId = this.packagesDict[currentPackage.name];
+        let rawTypes = await apiClientAsync(requestUrl, requestData);
+        rawTypes.forEach((type) => {
+          if(!!type.primaryQuantityDefinition.classificationCodeOne || !!type.primaryQuantityDefinition.classificationCodeTwo){
+            // disable update classifications
+            this.hideClassificationsUpdate();
+            ishidden = true;
+            this.canUpdateClassifications = false;
+          }
+        })
+      }
+    });
+  }
+
+  showClassificationsUpdate(){
+    $(`${ImportOptions.UpdateClassifications}`).show();
+  }
+
+  hideClassificationsUpdate(){
+    $(`#${ImportOptions.UpdateClassifications}`).hide();
   }
   
   enableMeasurementSystems(){
@@ -1275,7 +1304,7 @@ class PackageTable {
   }
 
   prepareCSVData(table) {
-    let exportOption = getImportExportOption();
+    let exportOption = getExportOption();
     let csvRows = [];
     let csvHeader = (exportOption === ExportOptions.ExportAllMainTable || exportOption === ExportOptions.ExportAllSecondaryTable ? ['Package Name' ] : []);
     let dataSet = [];
@@ -1309,8 +1338,10 @@ class PackageTable {
   async refreshPackages(){
     await this.fetchDataAsync('packages');
     let selectedId = $('input[name=listRadio]:checked', '#list')[0].id;
-    $('#list').empty();
-    this.drawTakeoffTable();
+    // $('#list').empty();
+    // this.drawTakeoffTable();
+    let selectedTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
+    await toggleTab(selectedTab);
     $(`#${selectedId}`).prop("checked", true);
   }
 
@@ -1398,7 +1429,7 @@ async function downloadAllCSV(csvData) {
 
 async function exportAllCSV(table){
   let csvData = [];
-  $('#executeCSV').hide();
+  $('#exportCSV').hide();
   $('.importInProgress').show();
   //Here we iterate through the packages available and append their csvs to csvData for extraction
   for(const packageData of packageTable.packages){
@@ -1408,7 +1439,7 @@ async function exportAllCSV(table){
     temporaryTable.packagesDict = packageTable.packagesDict;
     temporaryTable.packageName = packageData.name;
     temporaryTable.updatePackageId();
-    temporaryTable.humanReadableData = isHumanReadable();
+    temporaryTable.isHumanReadable = isHumanReadable();
     dataFetchs = ['items','types'];
     for(const data of dataFetchs){
       await temporaryTable.fetchDataAsync(data);
@@ -1420,7 +1451,7 @@ async function exportAllCSV(table){
     csvData = (temporaryCSVData.length > 1? csvData.concat(temporaryCSVData) : csvData);
   }
   downloadAllCSV(csvData);
-  $('#executeCSV').show();
+  $('#exportCSV').show();
   $('.importInProgress').hide();
 }
 
@@ -1440,45 +1471,55 @@ function checkForPackageData(){
   return true;
 }
 
+function alertEmptyTable(){
+  Swal.fire({
+    icon:'error',
+    title: 'Empty Table',
+    text: 'There\'s no data to export!',
+    showCancelButton: false,
+    confirmButtonColor: '#3085d6',
+    confirmButtonText: 'OK'
+  })
+}
+
 // Event when DOM tree is ready
 $(document).ready(function () {
 
-  $('#executeCSV').click(function () {
+  $('#exportCSV').click(function () {
 
-    exportImportOption = getImportExportOption();
+    exportOption = getExportOption();
     let csvData = [];
-    switch( exportImportOption ){
+    switch( exportOption ){
       case ExportOptions.ExportCurrentMainTable:{
-        csvData = packageTable.prepareCSVData(Tables.MainTable);
-        if(checkForPackageData() && csvData[0].length > 0)
+        csvData = packageTable.prepareCSVData(TablesIds.MainTable);
+        if(checkForPackageData() && csvData[0].length > 0){
           packageTable.exportCSV(csvData);
+        }
+        else{
+          alertEmptyTable();
+        }
         break;
       };
       case ExportOptions.ExportCurrentSecondaryTable:{
-        csvData = packageTable.prepareCSVData(Tables.SecondaryTable);
-        if(checkForPackageData() && csvData[0].length > 0)
+        csvData = packageTable.prepareCSVData(TablesIds.SecondaryTable);
+        if(checkForPackageData() && csvData[0].length > 0){
           packageTable.exportCSV(csvData);
+        }
+        else{
+          alertEmptyTable();
+        }
         break;
       };
       case ExportOptions.ExportAllMainTable:{
         if(checkForPackageData())
-          exportAllCSV(Tables.MainTable); 
+          exportAllCSV(TablesIds.MainTable); 
         break;
       };
       case ExportOptions.ExportAllSecondaryTable:{
         if(checkForPackageData())
-          exportAllCSV(Tables.SecondaryTable); 
+          exportAllCSV(TablesIds.SecondaryTable); 
         break;
       };
-      case ImportOptions.UpdateClassifications:{
-        if(checkForPackageData())
-          packageTable.importCSV(exportImportOption);
-        break;
-      }
-      case ImportOptions.CreateClassification:{
-        packageTable.importCSV(exportImportOption);
-        break;
-      }
     }
   });
 
@@ -1501,13 +1542,32 @@ $(document).ready(function () {
         Swal.fire({
           icon: 'error',
           title: 'An error ocurred!',
-          html: json2txt(responseBody),
+          html: json2txt(responseBody, true),
           showCancelButton: false,
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'OK'
         });
       }
     }
+  });
+
+  $(`#${ExportButtons.ExportClassification}`).click(async () => {
+    csvData = packageTable.prepareCSVData(TablesIds.MainTable);
+    if(checkForPackageData() && csvData[0].length > 0){
+      packageTable.exportCSV(csvData);
+    }
+    else{
+      alertEmptyTable();
+    }
+  });
+
+  $(`#${ImportOptions.CreateClassification}`).click(async () => {
+    packageTable.importCSV(ImportOptions.CreateClassification);
+  });
+
+  $(`#${ImportOptions.UpdateClassifications}`).click(async () => {
+    if(checkForPackageData())
+      packageTable.importCSV(ImportOptions.UpdateClassifications);
   });
 
   $('#btnRefresh').click(async () => {
@@ -1548,10 +1608,6 @@ $(document).ready(function () {
         $(`#${Titles.TablesTitle}`).html(`INVENTORY - ${packageTable.packageName || 'Choose a project'}`);
         $(`#${Titles.MainTableTitle}`).html('Grouped Items');
         $(`#${Titles.SecondaryTableTitle}`).html('List of All Items');
-        $(`#${ExportLabelsId.ExportAllMainTable}`).html(PackagesExportLabels.ExportAllMainTable);
-        $(`#${ExportLabelsId.ExportAllSecondaryTable}`).html(PackagesExportLabels.ExportAllSecondaryTable);
-        $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(PackagesExportLabels.ExportCurrentMainTable);
-        $(`#${ExportLabelsId.ExportCurrentSecondaryTable}`).html(PackagesExportLabels.ExportCurrentSecondaryTable);
         break;
       }
       case '#classificationsystems':{
@@ -1572,7 +1628,6 @@ $(document).ready(function () {
         $(`#${Titles.TablesTitle}`).html('CLASSIFICATIONS');
         $(`#${Titles.MainTableTitle}`).html('');
         $(`#${Titles.SecondaryTableTitle}`).html('');
-        $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(ClassificationsExportLabels.ExportCurrentMainTable);
         break;
       }
     }
@@ -1603,14 +1658,41 @@ $(document).ready(function () {
 
 });
 
-function json2txt(jsonMessage){
-  let jsonString = JSON.stringify(jsonMessage);
+function json2txt(jsonMessage, isPackageResponse = false){
+  let jsonValue = jsonMessage;
+  if(!!jsonMessage.statusCode && jsonMessage.statusCode !== 200 && jsonMessage.statusCode !== 200  ){
+    switch(jsonMessage.statusCode){
+      case 409:
+        jsonValue = isPackageResponse ? 'This Package name is already in use!' : 'This classification can\'t be changed as it\'s in use!';
+        break;
+      default:
+        jsonValue = 'An error ocurred! No changes were made!';
+        break;
+    }
+  }
+
+  if(!isPackageResponse && !!jsonMessage.classificationChanges)
+    jsonValue = jsonMessage.classificationChanges;
+
+  if(!isPackageResponse && !!jsonMessage.name)
+    jsonValue = `${jsonMessage.name} created!`;
+
+  let jsonString = JSON.stringify(jsonValue);
   return jsonString.replaceAll(':{', '<br>').replace('{', '').replaceAll('}', '').replaceAll('"', '').replaceAll(',', '<br>');
 }
 
 //Function to return option selected (import or export)
-function getImportExportOption(){
-  return $('input[name="exportimport"]:checked').val();
+function getExportOption(){
+  const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
+  switch(activeTab){
+    case '#items':
+      return `${$(`input[name="${ExportRadioNames.ExportPackage}"]:checked`).val()}-${$(`input[name="${ExportRadioNames.ExportTable}"]:checked`).val()}`;
+      break;
+    case '#classificationsystems':
+      return ExportOptions.ExportCurrentMainTable;
+      break;
+  }
+  return `${$('input[name="exportpackage"]:checked').val()}-${$('input[name="exporttable"]:checked').val()}`;
 }
 
 // helper function for Request
