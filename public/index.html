@@ -141,21 +141,6 @@
                     </select>
                   </div>
                 </div>
-                <!-- <div class="row" id="measurementSystemsRow">
-                  <div style="padding-top: 10px; text-align: center;">
-                    <div style="text-align: center;">
-                      <label>Measurement System:</label>
-                    </div>
-                    <div>
-                      <input type="radio" name='measurementSystem' id='metricSystem' value='METRIC' checked>
-                      <label for='metricSystem'>Metric</label>
-                    </div>
-                    <div>
-                      <input type="radio" name='measurementSystem' id='imperialSystem' value='IMPERIAL'>
-                      <label for='imperialSystem'>Imperial</label>
-                    </div>
-                  </div>
-                </div> -->
                 <div class="row">
                   <div style="padding-left: 20px; padding-right: 20px; text-align: left;">
                     <h5 id="mainTableTitle" style="text-align: center;"></h5>
@@ -178,11 +163,6 @@
         </div>       
         
         <div class="col-md-2" id="excel_handle">
-          <!-- <div class="row">
-            <div style="text-align: center;">
-              <h4>Data Setting</h4>
-            </div>
-          </div> -->
           <div class="row" id="measurementSystemsRow">
             <div style="padding-top: 10px; text-align: left; margin-left: 20px;">
               <div>
@@ -263,21 +243,6 @@
                       </span>
                       <label class="form-control" id='exportalllabel'>All Packages</label>
                     </div>
-                    <!-- <div style="text-align: left;" id="importlabel">
-                      <label>Import from csv:</label>
-                    </div>
-                    <div class="input-group">
-                      <span class="input-group-addon">
-                        <input type="radio" name='exportimport' value='updateclassifications' checked>
-                      </span>
-                      <label class="form-control">Update Classifications</label>
-                    </div>
-                    <div class="input-group">
-                      <span class="input-group-addon">
-                        <input type="radio" name='exportimport' value='createclassification' checked>
-                      </span>
-                      <label class="form-control">Create Classification System</label>
-                    </div> -->
                   </div>
                 </div>
               </div>
@@ -288,17 +253,22 @@
                       <img src="res/Bars-1s-200px.svg" class="InProgressImg">
                     </div>
                   </div>
-                  <button class="btn btn-primary" id="exportCSV" style="margin-bottom: 1em;">
-                    <span class="glyphicon glyphicon-play"></span>Export
+                  <label id='createclassificationlabel' style="font-size: small;"></label>
+                  <button class="btn btn-primary" id="createclassification" style="margin-bottom: 1em;">
+                    <span class="glyphicon glyphicon-play"></span>Import Classification
                   </button>
-                  <button class="btn btn-primary" id="exportClassification" style="margin-bottom: 1em;">
-                    <span class="glyphicon glyphicon-play"></span>Export Classification
-                  </button>
+                  <br>
+                  <label id='updateclassificationslabel' style="font-size: small;"></label>
                   <button class="btn btn-primary" id="updateclassifications" style="margin-bottom: 1em;">
                     <span class="glyphicon glyphicon-play"></span>Update Classification
                   </button>
-                  <button class="btn btn-primary" id="createclassification" style="margin-bottom: 1em;">
-                    <span class="glyphicon glyphicon-play"></span>Create Classification
+                  <br>
+                  <button class="btn btn-primary" id="exportClassification" style="margin-bottom: 1em;">
+                    <span class="glyphicon glyphicon-play"></span>Export Classification
+                  </button>
+                  <br>
+                  <button class="btn btn-primary" id="exportCSV" style="margin-bottom: 1em;">
+                    <span class="glyphicon glyphicon-play"></span>Export
                   </button>
                 </div>
               </div>

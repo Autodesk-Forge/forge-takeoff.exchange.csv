@@ -62,6 +62,11 @@ const MeasurementSystems = {
   IMPERIAL: 'IMPERIAL'
 }
 
+const ButtonsLabelsIds = {
+  ImportClassification: 'createclassificationlabel',
+  UpdateClassification: 'updateclassificationslabel'
+}
+
 const Guid_Pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const ImportDataTypes = {
@@ -1082,8 +1087,10 @@ class PackageTable {
             confirmButtonColor: '#3085d6',
             confirmButtonText: 'OK'
           })
-          if(responseBody.statusCode === 200 || responseBody.statusCode === 201 )
-            $('#btnRefresh').click();
+          if(responseBody.statusCode === 200 || responseBody.statusCode === 201 ){
+            let selectedTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
+            toggleTab(selectedTab);
+          }
         }
         else{
           Swal.fire({
@@ -1164,12 +1171,11 @@ class PackageTable {
         this.disableMeasurementSystems();
         break;
       }
-      // this.enableMeasurementSystems();
     }
   }
 
   async checkClassificationsUpdate(){
-    this.showClassificationsUpdate();
+    this.enableClassificationsUpdate();
     const requestUrl = '/api/forge/takeoff/info';
     const requestData = {
       'projectId': this.projectId,
@@ -1184,13 +1190,24 @@ class PackageTable {
         rawTypes.forEach((type) => {
           if(!!type.primaryQuantityDefinition.classificationCodeOne || !!type.primaryQuantityDefinition.classificationCodeTwo){
             // disable update classifications
-            this.hideClassificationsUpdate();
+            this.disableClassificationsUpdate();
             ishidden = true;
             this.canUpdateClassifications = false;
           }
         })
       }
     });
+  }
+
+  enableClassificationsUpdate(){
+    $(`#${ButtonsLabelsIds.UpdateClassification}`).html('').hide();
+    $(`${ImportOptions.UpdateClassifications}`).prop("disabled", false);
+  }
+
+  disableClassificationsUpdate(){
+    $(`#${ImportOptions.UpdateClassifications}`).prop("disabled", true);
+    if(!$(`#${ImportOptions.UpdateClassifications}`).is(":hidden"))
+      $(`#${ButtonsLabelsIds.UpdateClassification}`).html('Classification already in use!').show();
   }
 
   showClassificationsUpdate(){
@@ -1335,14 +1352,14 @@ class PackageTable {
     return csvRows;
   };
 
-  async refreshPackages(){
+  async refreshPackages(packageName){
     await this.fetchDataAsync('packages');
-    let selectedId = $('input[name=listRadio]:checked', '#list')[0].id;
+    // let selectedId = $('input[name=listRadio]:checked', '#list')[0].id;
     // $('#list').empty();
     // this.drawTakeoffTable();
     let selectedTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
     await toggleTab(selectedTab);
-    $(`#${selectedId}`).prop("checked", true);
+    // $(`#${selectedId}`).prop("checked", true);
   }
 
   async refreshSystems(){
@@ -1537,7 +1554,7 @@ $(document).ready(function () {
     if (packageName) {
       let responseBody = await packageTable.createPackage(packageName);
       if(responseBody.statusCode === 201)
-        await packageTable.refreshPackages();
+        await packageTable.refreshPackages(packageName);
       else{
         Swal.fire({
           icon: 'error',
@@ -1569,93 +1586,6 @@ $(document).ready(function () {
     if(checkForPackageData())
       packageTable.importCSV(ImportOptions.UpdateClassifications);
   });
-
-  $('#btnRefresh').click(async () => {
-    const projectHref = $('#labelProjectHref').text();
-    const projectId = $('#labelProjectId').text();
-    if (projectHref === '' || projectId === '') {
-      alert('please select one project!');
-      return;
-    }
-
-    let dataFetchs;
-    packageTable.IsHumanReadable = isHumanReadable();
-    //Here we grab the package/classification name
-    packageTable.packageName = $('input[name="listRadio"]:checked').val();
-
-    // here we get the active tab
-    const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
-    switch( activeTab ){
-      case '#items':{
-        $(`#${CaseDependentRows.PackagesGroupBy}`).show();
-        $(`#${CaseDependentRows.MeasurementSystems}`).hide();
-        //in case the tab is for package items, we check if we need to obtain packages, systems, views and locations
-        //this is needed when we come from classifications tab, change the package or change the project
-        if(!packageTable.packageName || $(`#${Titles.ListTitle}`).html() == 'CLASSIFICATION SYSTEMS'){
-          $('#list').empty();
-          packageTable.CurrentDataType = TakeoffDataType.PACKAGES;
-          dataFetchs = ['packages','systems', 'views', 'locations'];
-        }
-        else{
-          packageTable.updatePackageId();
-          packageTable.CurrentDataType = TakeoffDataType.ITEMS;
-          dataFetchs = ['types', 'items'];
-        }
-        $(`#${Titles.ListTitle}`).html('PACKAGES');
-        $('#addPackage').show();
-        $(`#${TablesIds.MainTable}`).show();
-        $(`#${TablesIds.SecondaryTable}`).show();
-        $(`#${Titles.TablesTitle}`).html(`INVENTORY - ${packageTable.packageName || 'Choose a project'}`);
-        $(`#${Titles.MainTableTitle}`).html('Grouped Items');
-        $(`#${Titles.SecondaryTableTitle}`).html('List of All Items');
-        break;
-      }
-      case '#classificationsystems':{
-        $(`#${CaseDependentRows.PackagesGroupBy}`).hide();
-        $(`#${CaseDependentRows.MeasurementSystems}`).show();
-        if(!packageTable.packageName || $(`#${Titles.ListTitle}`).html() == 'PACKAGES'){
-          $('#list').empty();
-          packageTable.CurrentDataType = TakeoffDataType.SYSTEMS;
-          // dataFetchs = ['systems', 'views'];
-        }
-        else{
-          packageTable.CurrentDataType = TakeoffDataType.CLASSIFICATIONS;
-        }
-        dataFetchs = ['packages', 'systems', 'views'];
-        $(`#${Titles.ListTitle}`).html('CLASSIFICATION SYSTEMS');
-        $('#addPackage').hide();
-        $(`#${TablesIds.SecondaryTable}`).hide();
-        $(`#${Titles.TablesTitle}`).html('CLASSIFICATIONS');
-        $(`#${Titles.MainTableTitle}`).html('');
-        $(`#${Titles.SecondaryTableTitle}`).html('');
-        break;
-      }
-    }
-
-    $('.clsInProgress').show();
-    $('.clsResult').hide();
-
-    try{
-      for(const data of dataFetchs){
-        await packageTable.fetchDataAsync(data);
-      }
-    }catch(err){
-      console.log(err);
-    }
-
-    await packageTable.polishDataOfCurrentDataTypeAsync();
-    packageTable.drawTakeoffTable();
-    packageTable.checkMeasurementSystem();
-
-    // if(activeTab === '#classificationsystems')
-    manageImportExportOptions();
-      
-    updateTitles();
-
-    $('.clsInProgress').hide();
-    $('.clsResult').show();
-  })
-
 });
 
 function json2txt(jsonMessage, isPackageResponse = false){

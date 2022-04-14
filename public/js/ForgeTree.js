@@ -86,9 +86,6 @@ $(document).ready(function () {
   });
 
   $('a[data-toggle="tab"]').on('shown.bs.tab', async function (event) {
-    // $('#btnRefresh').click();
-    // manageImportExportOptions();
-    // await toggleTab(event.target.href.split('#')[1]);
     await toggleTab(event.target.hash);
   });
 
@@ -130,10 +127,6 @@ async function toggleTab(selectedTab){
       $(`#${Titles.TablesTitle}`).html(`INVENTORY - ${packageTable.packageName || 'Choose a project'}`);
       $(`#${Titles.MainTableTitle}`).html('Grouped Items');
       $(`#${Titles.SecondaryTableTitle}`).html('List of All Items');
-      // $(`#${ExportLabelsId.ExportAllMainTable}`).html(PackagesExportLabels.ExportAllMainTable);
-      // $(`#${ExportLabelsId.ExportAllSecondaryTable}`).html(PackagesExportLabels.ExportAllSecondaryTable);
-      // $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(PackagesExportLabels.ExportCurrentMainTable);
-      // $(`#${ExportLabelsId.ExportCurrentSecondaryTable}`).html(PackagesExportLabels.ExportCurrentSecondaryTable);
         break;
     }
     case '#classificationsystems':{
@@ -148,7 +141,6 @@ async function toggleTab(selectedTab){
       $(`#${Titles.TablesTitle}`).html('CLASSIFICATIONS');
       $(`#${Titles.MainTableTitle}`).html('');
       $(`#${Titles.SecondaryTableTitle}`).html('');
-      // $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(ClassificationsExportLabels.ExportCurrentMainTable);
       break;
     }
   }
@@ -207,12 +199,6 @@ const ExportOptions = {
   ExportAllSecondaryTable: 'exportallpackages-exportsecondarytable'
 }
 
-// const ExportOptions = {
-//   ExportCurrentMainTable: 'exportcurrentmaintable',
-//   ExportCurrentSecondaryTable: 'exportcurrentsecondarytable',
-//   ExportAllMainTable: 'exportallmaintable',
-//   ExportAllSecondaryTable: 'exportallsecondarytable'
-// }
 
 function updateTitles(){
   const activeTab = $("ul#takeoffTableTabs li.active").children()[0].hash;
@@ -319,35 +305,32 @@ function hideNShowOptions(optionsToHide, optionsToShow, buttonsToHide, buttonsTo
   for(const buttonToShow of buttonsToShow){
     $(`#${buttonToShow}`).show();
   }
+
+  $(`#${ImportOptions.CreateClassification}`).prop("disabled", false);
+  $(`#${ImportOptions.UpdateClassifications}`).prop("disabled", false);
+
+  $(`#${ButtonsLabelsIds.ImportClassification}`).html('').hide();
   //Here we handle the case where we already have 2 classification systems, so creation isn't possible
-  if(Object.keys(packageTable.systems).length == 2)
-    $(`#${ImportOptions.CreateClassification}`).hide();
+  if(Object.keys(packageTable.systems).length == 2){
+    $(`#${ImportOptions.CreateClassification}`).prop("disabled", true);
+    if(!$(`#${ImportOptions.CreateClassification}`).is(":hidden"))
+      $(`#${ButtonsLabelsIds.ImportClassification}`).html('The project already has 2 classifications!').show();
+  }
 
+  $(`#${ButtonsLabelsIds.UpdateClassification}`).html('').hide();
   //Here we handle the case where there's no classification at all, so there's nothing to update
-  if(Object.keys(packageTable.systems).length == 0 || !packageTable.canUpdateClassifications)
-    $(`#${ImportOptions.UpdateClassifications}`).hide();
-
+  if(Object.keys(packageTable.systems).length == 0 || !packageTable.canUpdateClassifications){
+    $(`#${ImportOptions.UpdateClassifications}`).prop("disabled", true);
+    if(!$(`#${ImportOptions.UpdateClassifications}`).is(":hidden"))
+      $(`#${ButtonsLabelsIds.UpdateClassification}`).html('There\'s no classification to update!').show();
+  }
 
   $(`input[name="${ExportRadioNames.ExportPackage}"]:visible`).prop("checked", true);
   $(`input[name="${ExportRadioNames.ExportTable}"]:visible`).prop("checked", true);
 
-  //Here we check if all import options are hidden
-  // if(!anyImportVisible())
-  //   $('#importlabel').hide();
- 
-  // $('#exporttablelabel').show();
-  // $('#exportpackagelabel').show();
-  // //Here we check if all export options are hidden
-  // if(!anyExportVisible())
-  //   $('#exporttablelabel').hide();
-  //   $('#exportpackagelabel').hide();
 }
 
 function anyExportVisible(){
-  for(const exportOption of Object.keys(ExportOptions)){
-    if($(`input[name="${ImportExportRadioName}"][value="${ExportOptions[exportOption]}"]`).is(':visible'))
-      return true;
-  }
   for(const exportOption of Object.keys(ExportOptions)){
     if($(`input[name="${ImportExportRadioName}"][value="${ExportOptions[exportOption]}"]`).is(':visible'))
       return true;
@@ -396,10 +379,6 @@ async function handleListChange(){
       $(`#${Titles.TablesTitle}`).html(`INVENTORY - ${packageTable.packageName || 'Choose a project'}`);
       $(`#${Titles.MainTableTitle}`).html('Grouped Items');
       $(`#${Titles.SecondaryTableTitle}`).html('List of All Items');
-      // $(`#${ExportLabelsId.ExportAllMainTable}`).html(PackagesExportLabels.ExportAllMainTable);
-      // $(`#${ExportLabelsId.ExportAllSecondaryTable}`).html(PackagesExportLabels.ExportAllSecondaryTable);
-      // $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(PackagesExportLabels.ExportCurrentMainTable);
-      // $(`#${ExportLabelsId.ExportCurrentSecondaryTable}`).html(PackagesExportLabels.ExportCurrentSecondaryTable);
       break;
     }
     case '#classificationsystems':{
@@ -415,7 +394,6 @@ async function handleListChange(){
       $(`#${Titles.TablesTitle}`).html('CLASSIFICATIONS');
       $(`#${Titles.MainTableTitle}`).html('');
       $(`#${Titles.SecondaryTableTitle}`).html('');
-      // $(`#${ExportLabelsId.ExportCurrentMainTable}`).html(ClassificationsExportLabels.ExportCurrentMainTable);
       break;
     }
   }
@@ -433,9 +411,7 @@ async function handleListChange(){
 
   await packageTable.polishDataOfCurrentDataTypeAsync();
   packageTable.drawTakeoffTable();
-  // packageTable.checkMeasurementSystem();
 
-  // if(activeTab === '#classificationsystems')
   manageImportExportOptions();
     
   updateTitles();
@@ -491,7 +467,6 @@ function prepareUserHubsTree() {
         delete packageTable;
         packageTable = null;
       }
-      // $('#list').empty();
 
       packageTable = new PackageTable('#mainTable', '#secondaryTable', data.node.original.project_id, data.node.id, TakeoffDataType.PACKAGES);
       // $('#btnRefresh').click();
