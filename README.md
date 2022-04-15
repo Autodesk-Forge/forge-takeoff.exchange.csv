@@ -11,24 +11,30 @@
 [![MIT](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 [![Level](https://img.shields.io/badge/Level-Intermediate-blue.svg)](http://developer.autodesk.com/)
 
-##UPDATED March/2022
+## UPDATED April/2022
 
 ## Demonstration
 
-https://www.youtube.com/watch?v=2OybBDq-hpE
+https://www.youtube.com/watch?v=pZlKA6NftKY
 
-Included support for locations and the new endpoints for creating and updating Takeoff packages and classification systems.
+Included support for locations and the new endpoints for creating and updating Takeoff packages, classification systems and measurement systems.
 Here are the steps to make it work (just like in the video ;) ):
 
-1. Export one classification as csv from this sample (we also have an empty one at **samples** folder) through the option **_Export to csv: Current Table_**.
-2. You can update existing classifications (through the option **_Import from csv: Update classifications_**) or create a new classification system (through the option **_Import from csv: Create Classification System_**) based on a csv available.
+1. Export one classification as csv from this sample (we also have an empty one at **samples** folder) through the button **_Export Classification_**.
+2. You can update existing classifications (through the button **_Update Classification_**) or create a new classification system (through the option **_Import Classification_**) based on a csv available.
+3. You can also change the **_Measurement System_** through the options available (Metric and Imperial).
 
 ## Description
 
-This sample demonstrates how to retrieve, classify and export data of inventories from Autodesk Takeoff. It includes 2 main tasks:
+This sample demonstrates how to retrieve, classify and export data of inventories and classifications from Autodesk Takeoff. You can also import and classification systems and change the measurement system.
+It includes the tasks below:
 
-1. Display Autodesk Takeoff Inventory in **Human readable form** (after the update we only have **Human readable form** for the main table).
-2. Export Autodesk Takeoff Inventory from **current** or **all** packages available in **Human readable form** to a CSV file.
+1. Display Autodesk Takeoff Inventory in **readable form** or **raw form** in two tables (one for the items grouped and other for all items).
+2. Export Autodesk Takeoff Inventory from **current** or **all** packages available in **readable form** or **raw form** from both tables to a CSV file.
+3. Display Takeoff Measurement System currently defined and an interface to modify it (when possible).
+4. Display Classifications systems from available classification systems.
+5. Export classifications from available classification systems.
+6. Import and Update classification systems (when possible).
 
 This sample is implemented based on Node.js version of [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please refer to https://learnforge.autodesk.io/ for the details about the framework.
 
@@ -101,8 +107,8 @@ Open the browser: [http://localhost:3000](http://localhost:3000).
 - **Operate with App after setup**
 
 1. Once you select a project, the sample will load the packages available. **With project and package/classification selected, you need to click on load/refresh button in order to retrieve the results to the table.**
-2. By simply selecting the classification options you can adjust your data to show the available classifications
-3. The first Table shows the data classified according to the chosen options and the second shows each individual takeoff item (when items panel is selected).
+2. When **Project Settings** panel is selected, the sample shows a list of classification systems available classifications systems and display the content of the selected one in one table. At the right side it shows UI to handle **Measurement System**, **Import Classification**, **Update Classification** (these first three might be disables depending on usage on your project) and **Export Classification**.
+3. When **Items** panel is selected, the sample shows a list of packages available and display the content of the selected one in two tables. The first Table shows the data classified according to the chosen options and the second shows each individual takeoff item. At the right side it shows UI to handle **Export** based on **grouped items** or **list of all items** for the selected package or the whole project.
 
 ## Deployment
 
@@ -116,13 +122,11 @@ To deploy this application to Heroku, the **Callback URL** for Forge must use yo
 
 ## Tips & Tricks
 
-1. **You'll need to click on load/refresh button after selecting your project and package in order to generate the proper table with the desired takeoff items.**
+1. **When Importing or Updating, the first line of the csv is reserved for header and is ignored.**
 
-2. **The first line of the csv is reserved for header and is ignored on import.**
+2. **Be aware of the limitations when creating and updating classification system or changing measurement systems.**
 
-3. **After adding a package, you'll need to click on the project so the sample acquire all available packages again.**
-
-4. **Be aware of the limitations when creating and updating classification systems.**
+3. **After changing between tabs or projects, it might take some seconds to show the proper buttons and check what is available to change. It's a good practice to wait the loading and then perform the tasks.**
 
 ## Troubleshooting
 
