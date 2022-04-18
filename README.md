@@ -26,8 +26,6 @@
 - Export classifications from available classification systems.
 - Import and Update classification systems (when possible).
 
-This sample is implemented based on Node.js version of [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please refer to https://learnforge.autodesk.io/ for the details about the framework.
-
 ## Thumbnail
 ![thumbnail](/thumbnail.png)
 
@@ -94,35 +92,27 @@ Open the browser: [http://localhost:3000](http://localhost:3000).
 - **Operate with App after setup**
 
 1. Once you select a project, the sample will load the packages available. **With project and package/classification selected, the takeoff items will be retrieved in the table.**
-2. When **Project Settings** panel is selected, the sample shows a list of classification systems available, also list information of the current selected classfication system. At the right side it shows UI to handle **Measurement System**, **Import Classification**, **Update Classification** (these first three might be disables depending on usage on your project) and **Export Classification**.
-3. When **Items** panel is selected, the sample shows a list of packages available and display the content of the selected one in two tables. The first Table shows the data classified according to the selected options and the second table shows each individual takeoff item. At the right side it shows UI to handle **Export** based on **grouped items** or **list of all items** for the selected package or the whole project.
+2. When **Items** panel is selected, the sample shows a list of packages available and display the content of the selected one in two tables. The first Table shows the data classified according to the selected options and the second table shows each individual takeoff item. At the right side it shows UI to handle **Export** based on **grouped items** or **list of all items** for the selected package or the whole project.
+3. When **Project Settings** panel is selected, the sample shows a list of classification systems available, also list information of the current selected classfication system. At the right side it shows UI to handle **Measurement System**, **Import Classification**, **Update Classification** (these first three might be disables depending on usage on your project) and **Export Classification**.
 
 ## Deployment
-
 To deploy this application to Heroku, the **Callback URL** for Forge must use your `.herokuapp.com` address. After clicking on the button below, at the Heroku Create New App page, set your Client ID, Secret and Callback URL for Forge.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Autodesk-Forge/forge-takeoff.exchange.csv)
 
 ## Known issues
-
 1. For the extraction as CSV, the fileds containing commas are replaced by blank spaces, so they're not mistaken as another column.
 
 ## Tips & Tricks
-
 1. **When Importing or Updating, the first line of the csv is reserved for header and is ignored.**
-
 2. **Be aware of the limitations when creating and updating classification system or changing measurement systems.**
-
 3. **After changing between tabs or projects, it might take some seconds to show the proper buttons and check what is available to change. It's a good practice to wait the loading and then perform the tasks.**
 
 ## Troubleshooting
-
 1. **Cannot see my ACC projects**: Make sure to provision the Forge App Client ID within the ACC Account, [learn more here](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps). This requires the Account Admin permission.
 
 ## Further Reading
-
 **Document**:
-
 - This sample is based on [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please check details there about the basic framework if you are not familar.
 - [Data Management API](https://developer.autodesk.com/en/docs/data/v2/overview/)
 - [ACC API](https://developer.autodesk.com/en/docs/bim360/v1/overview/) and [App Provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps)
@@ -132,19 +122,15 @@ To deploy this application to Heroku, the **Callback URL** for Forge must use yo
 - [View BIM 360/ACC Models Tutorial](http://learnforge.autodesk.io/#/tutorials/viewhubmodels)
 
 **Blogs**:
-
 - [Forge Blog](https://forge.autodesk.com/blog/autodesk-takeoff-api)
 - [Field of View](https://fieldofviewblog.wordpress.com/), a BIM focused blog
 
 ## License
-
 This sample is licensed under the terms of the [MIT License](http://opensource.org/licenses/MIT). Please see the [LICENSE](LICENSE) file for full details.
 
 # Change History
 ## Improve Date: 2022-4-18
 - Support setting up takeoff project, including measurement system, importing/updating/exporting takeoff classification systems from/to csv file.
 
-
 ## Written by
-
 João Martins [@JooPaulodeOrne2](http://twitter.com/JooPaulodeOrne2), [Developer Advocate and Support](http://forge.autodesk.com)
