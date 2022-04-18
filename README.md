@@ -12,27 +12,36 @@
 [![Level](https://img.shields.io/badge/Level-Intermediate-blue.svg)](http://developer.autodesk.com/)
 
 ## Description
+
 ### The sample includes the following 2 main features:
+
 1. Support takeoff project set up, include setting measurement system, importing/updating/exporting takeoff classification systems from/to csv file.
 2. Support handling takeoff items under package, include creating package, list takeoff items under current package or all packages, you can also export these information to a csv file.
 
 ### To use the sample, you can check the following tasks:
+
 #### Items:
+
 - Display Autodesk Takeoff Inventory in **readable form** or **raw form** in two tables (one for the items grouped and other for all items).
 - Export Autodesk Takeoff Inventory from **current** or **all** packages available in **readable form** or **raw form** from both tables to a CSV file.
+
 #### Project Settings
+
 - Display Takeoff Measurement System currently defined and an interface to modify it (when possible).
 - Display Classifications systems from available classification systems.
 - Export classifications from available classification systems.
 - Import and Update classification systems (when possible).
 
 ## Thumbnail
+
 ![thumbnail](/thumbnail.png)
 
 ## Demonstration
-https://www.youtube.com/watch?v=_SJVh2si40Y
+
+https://www.youtube.com/watch?v=pZlKA6NftKY
 
 ## Live Demo
+
 https://autodesk-takeoff-exchange.herokuapp.com
 
 # Web App Setup
@@ -96,23 +105,29 @@ Open the browser: [http://localhost:3000](http://localhost:3000).
 3. When **Project Settings** panel is selected, the sample shows a list of classification systems available, also list information of the current selected classfication system. At the right side it shows UI to handle **Measurement System**, **Import Classification**, **Update Classification** (these first three might be disables depending on usage on your project) and **Export Classification**.
 
 ## Deployment
+
 To deploy this application to Heroku, the **Callback URL** for Forge must use your `.herokuapp.com` address. After clicking on the button below, at the Heroku Create New App page, set your Client ID, Secret and Callback URL for Forge.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Autodesk-Forge/forge-takeoff.exchange.csv)
 
 ## Known issues
+
 1. For the extraction as CSV, the fileds containing commas are replaced by blank spaces, so they're not mistaken as another column.
 
 ## Tips & Tricks
+
 1. **When Importing or Updating, the first line of the csv is reserved for header and is ignored.**
 2. **Be aware of the limitations when creating and updating classification system or changing measurement systems.**
 3. **After changing between tabs or projects, it might take some seconds to show the proper buttons and check what is available to change. It's a good practice to wait the loading and then perform the tasks.**
 
 ## Troubleshooting
+
 1. **Cannot see my ACC projects**: Make sure to provision the Forge App Client ID within the ACC Account, [learn more here](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps). This requires the Account Admin permission.
 
 ## Further Reading
+
 **Document**:
+
 - This sample is based on [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please check details there about the basic framework if you are not familar.
 - [Data Management API](https://developer.autodesk.com/en/docs/data/v2/overview/)
 - [ACC API](https://developer.autodesk.com/en/docs/bim360/v1/overview/) and [App Provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps)
@@ -122,15 +137,20 @@ To deploy this application to Heroku, the **Callback URL** for Forge must use yo
 - [View BIM 360/ACC Models Tutorial](http://learnforge.autodesk.io/#/tutorials/viewhubmodels)
 
 **Blogs**:
+
 - [Forge Blog](https://forge.autodesk.com/blog/autodesk-takeoff-api)
 - [Field of View](https://fieldofviewblog.wordpress.com/), a BIM focused blog
 
 ## License
+
 This sample is licensed under the terms of the [MIT License](http://opensource.org/licenses/MIT). Please see the [LICENSE](LICENSE) file for full details.
 
 # Change History
+
 ## Improve Date: 2022-4-18
+
 - Support setting up takeoff project, including measurement system, importing/updating/exporting takeoff classification systems from/to csv file.
 
 ## Written by
+
 João Martins [@JooPaulodeOrne2](http://twitter.com/JooPaulodeOrne2), [Developer Advocate and Support](http://forge.autodesk.com)
