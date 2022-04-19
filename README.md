@@ -36,13 +36,15 @@
 
 ![thumbnail](/thumbnail.png)
 
-## Demonstration
+## Live version
 
-https://www.youtube.com/watch?v=pZlKA6NftKY
-
-## Live Demo
+You can run this sample live here:
 
 https://autodesk-takeoff-exchange.herokuapp.com
+
+and the recording demonstrating how to run here:
+
+https://www.youtube.com/watch?v=pZlKA6NftKY
 
 # Web App Setup
 
